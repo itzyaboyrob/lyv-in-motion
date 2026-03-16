@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lyv in Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080808;--surface:#0e0e0e;--surface2:#141414;--border:#1e1e1e;--border2:#282828;
+    --text:#e0e0e0;--text2:#888;--text3:#444;--text4:#2a2a2a;
+    --accent:#FF4500;--accent2:#FFB800;--green:#00C896;--blue:#00AAFF;--purple:#A855F7;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;letter-spacing:.02em}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:#111}
+  ::-webkit-scrollbar-thumb{background:#2a2a2a}
+
+  /* ── layout ── */
+  #app{display:flex;flex-direction:column;min-height:100vh}
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+  .header-left h1{font-size:22px;font-weight:900;color:#fff;line-height:1;letter-spacing:.05em}
+  .header-left .sub{font-size:10px;color:var(--text3);letter-spacing:.18em;margin-bottom:3px}
+  .main{display:flex;flex:1;overflow:hidden}
+  .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+  .content{flex:1;overflow-y:auto;padding:24px 20px 60px}
+
+  /* ── week/day nav ── */
+  .week-section{border-bottom:1px solid var(--border)}
+  .week-header{padding:10px 14px 8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+  .week-header:hover{background:var(--surface2)}
+  .week-label{font-size:11px;font-weight:800;letter-spacing:.12em}
+  .week-prog{font-size:10px;color:var(--text3)}
+  .day-item{padding:8px 14px 8px 20px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s;border-left:2px solid transparent}
+  .day-item:hover{background:var(--surface2)}
+  .day-item.active{background:var(--surface2);border-left-color:var(--accent)}
+  .day-dot{width:7px;height:7px;border-radius:0;flex-shrink:0}
+  .day-name{font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .day-item.active .day-name{color:#fff}
+  .day-pct{font-size:10px;color:var(--text3);margin-left:auto;flex-shrink:0}
+
+  /* ── heatmap ── */
+  .heatmap-section{padding:14px 12px 16px}
+  .heatmap-title{font-size:9px;color:var(--text3);letter-spacing:.18em;margin-bottom:10px}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .heatmap-cell{aspect-ratio:1;border:1px solid #cccccc;cursor:pointer;transition:all .15s;position:relative;background:#fff}
+  .heatmap-cell:hover{border-color:#999}
+  .heatmap-cell.done{border-color:transparent}
+  .heatmap-cell .cell-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.02em}
+
+  /* ── content area ── */
+  .day-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+  .day-number-badge{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0;border:2px solid}
+  .day-title{font-size:26px;font-weight:900;line-height:1;color:#fff}
+  .day-subtitle{font-size:13px;font-weight:600;letter-spacing:.1em;margin-top:2px}
+  .week-badge{margin-left:auto;text-align:right}
+  .week-badge .wk{font-size:11px;color:var(--text3);letter-spacing:.12em}
+  .week-badge .pct{font-size:28px;font-weight:900}
+
+  .progress-bar-wrap{height:2px;background:var(--surface2);margin-bottom:24px}
+  .progress-bar{height:100%;transition:width .4s ease}
+
+  /* ── sections ── */
+  .section-label{font-size:10px;color:var(--text3);letter-spacing:.18em;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+  .warmup-box{background:var(--surface);border:1px solid var(--border);padding:12px 16px;margin-bottom:22px}
+  .warmup-item{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid var(--border)}
+  .warmup-item:last-child{border-bottom:none}
+  .warmup-dot{width:4px;height:4px;background:var(--border2);flex-shrink:0}
+  .warmup-text{font-family:'Barlow',sans-serif;font-size:13px;color:var(--text2)}
+
+  .superset-block{margin-bottom:22px}
+  .superset-title-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .superset-title{font-size:10px;font-weight:800;letter-spacing:.15em}
+  .superset-line{flex:1;height:1px}
+
+  .exercise-card{background:var(--surface);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px}
+  .exercise-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .exercise-name{font-size:15px;font-weight:700;color:var(--text)}
+  .exercise-meta{font-family:'Barlow',sans-serif;font-size:11px;color:var(--text3);margin-top:1px}
+  .exercise-controls{display:flex;align-items:center;gap:6px}
+  .weight-input{background:#0a0a0a;border:1px solid var(--border2);color:var(--text2);font-family:'Barlow',sans-serif;font-size:12px;padding:4px 8px;width:80px;outline:none}
+  .weight-input:focus{border-color:#444}
+  .pr-badge{font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 6px;background:#FFB80022;color:#FFB800;border:1px solid #FFB80044;display:none}
+  .pr-badge.show{display:inline-block}
+  .note-btn{cursor:pointer;background:#0a0a0a;border:1px solid var(--border2);color:var(--text3);padding:4px 8px;font-family:inherit;font-size:10px;letter-spacing:.08em;transition:all .12s}
+  .note-btn:hover{border-color:#444;color:var(--text2)}
+  .note-btn.active{color:var(--accent);border-color:var(--accent)44}
+
+  .sets-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .set-box{width:42px;height:42px;border:1.5px solid var(--border2);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;user-select:none;transition:all .12s;flex-shrink:0}
+  .set-box:hover{border-color:#555}
+  .set-box.done{border-color:var(--set-accent);background:color-mix(in srgb,var(--set-accent) 12%,transparent)}
+  .set-box .sl{font-size:9px;color:var(--text4)}
+  .set-box.done .sl{color:var(--set-accent)}
+  .set-box .sn{font-size:16px;font-weight:900;color:var(--text4);line-height:1}
+  .set-box.done .sn{color:var(--set-accent)}
+  .rest-btn{cursor:pointer;background:#0a0a0a;border:1px solid var(--border2);color:var(--text3);padding:0 10px;height:42px;font-family:inherit;font-size:10px;letter-spacing:.08em;transition:all .12s;flex-shrink:0}
+  .rest-btn:hover{border-color:#444;color:var(--text2)}
+
+  .note-area{margin-top:8px}
+  .note-textarea{width:100%;background:#0a0a0a;border:1px solid var(--border2);color:var(--text2);font-family:'Barlow',sans-serif;font-size:12px;padding:7px 10px;outline:none;resize:none;line-height:1.5}
+  .note-textarea:focus{border-color:#444}
+
+  .finish-box{border:1px solid;padding:12px 16px;display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+  .finish-arrow{font-size:18px;flex-shrink:0;margin-top:1px}
+  .finish-label{font-size:9px;letter-spacing:.15em;margin-bottom:2px}
+  .finish-text{font-family:'Barlow',sans-serif;font-size:13px;color:var(--text2)}
+
+  /* ── timer ── */
+  .timer-widget{display:flex;align-items:center;gap:12px}
+  .timer-display{text-align:right}
+  .timer-label{font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:2px}
+  .timer-time{font-size:28px;font-weight:900;line-height:1;transition:color .3s;color:#252525}
+  .timer-time.running{color:var(--accent2)}
+  .timer-time.urgent{color:var(--accent)!important;animation:pulse 1s infinite}
+  .timer-btns{display:flex;flex-direction:column;gap:3px}
+  .tbtn{cursor:pointer;background:#0a0a0a;border:1px solid var(--border2);color:var(--text3);padding:3px 8px;font-family:inherit;font-size:10px;letter-spacing:.05em;transition:all .12s}
+  .tbtn:hover{border-color:#444;color:var(--text2)}
+  .tbtn.stop{color:var(--accent);border-color:var(--accent)33}
+
+  /* ── header buttons ── */
+  .hdr-btn{cursor:pointer;background:none;border:1px solid var(--border2);color:var(--text3);padding:6px 12px;font-family:inherit;font-size:10px;letter-spacing:.1em;transition:all .12s}
+  .hdr-btn:hover{border-color:#555;color:var(--text)}
+  .hdr-btn.primary{background:#fff;color:#000;border-color:#fff}
+  .hdr-btn.primary:hover{background:#ddd}
+
+  /* ── overview tab ── */
+  .overview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);padding:16px}
+  .stat-value{font-size:32px;font-weight:900;line-height:1}
+  .stat-label{font-size:10px;color:var(--text3);letter-spacing:.15em;margin-top:4px}
+
+  .pr-list{background:var(--surface);border:1px solid var(--border);padding:0}
+  .pr-row{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border)}
+  .pr-row:last-child{border-bottom:none}
+  .pr-exercise{font-size:13px;font-weight:700;color:var(--text)}
+  .pr-weight{font-size:13px;font-weight:700;color:#FFB800}
+  .pr-week{font-size:10px;color:var(--text3);letter-spacing:.08em}
+
+  .completion-table{width:100%;border-collapse:collapse;margin-top:10px}
+  .completion-table th{font-size:9px;letter-spacing:.12em;color:var(--text3);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border)}
+  .completion-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px}
+  .completion-table tr:last-child td{border-bottom:none}
+
+  /* ── modal ── */
+  .modal-overlay{position:fixed;inset:0;background:#000a;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{background:var(--surface);border:1px solid var(--border2);padding:24px;width:100%;max-width:440px}
+  .modal h3{font-size:16px;font-weight:800;color:#fff;letter-spacing:.08em;margin-bottom:16px}
+  .modal-btns{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+
+  /* ── utils ── */
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .complete-banner{padding:16px;border:1px solid;text-align:center;margin-top:20px}
+  .complete-banner h3{font-size:18px;font-weight:900;letter-spacing:.1em}
+  .complete-banner p{font-family:'Barlow',sans-serif;font-size:12px;color:var(--text3);margin-top:4px}
+  .tab-row{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
+  .tab{cursor:pointer;padding:10px 18px;font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--text3);border-bottom:2px solid transparent;transition:all .12s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:#fff;border-bottom-color:var(--accent)}
+
+  @media(max-width:640px){
+    .sidebar{display:none}
+    .overview-grid{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBq5hWugHW8JQ-kcf4cUgLF7gagnw-18hA",
+  authDomain: "lyv-in-motion.firebaseapp.com",
+  projectId: "lyv-in-motion",
+  storageBucket: "lyv-in-motion.firebasestorage.app",
+  messagingSenderId: "19182680025",
+  appId: "1:19182680025:web:12b4fe6b7fee5940fa8bc8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ── No email restriction — anyone with Google can sign in ──
+let currentUser = null;
+let saveTimeout = null;
+// ═══════════════════════════════════════════════════════
+// PROGRAM DATA
+// ═══════════════════════════════════════════════════════
+const DAY_COLORS = ['#FF4500','#FFB800','#E71D36','#00AAFF','#A855F7','#00C896','#4CAF50'];
+
+const PHASE = (w) => w <= 3 ? 'A' : 'B'; // A = weeks 1-3, B = weeks 4-6
+
+const PROGRAM = {
+  days: [
+    {
+      id: 1, label: 'CHEST + TRICEPS', sub: 'Chest · Triceps · Run',
+      warmup: ['Light Bike or Jump Rope — 2 min','Arm Circles — 20','Band Pull Aparts — 20','World\'s Greatest Stretch — 5/side','Pushups — 10'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Bench Press',sets:3,reps:'8'},{name:'Pushups',sets:3,reps:'12'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Incline Dumbbell Press',sets:3,reps:'10'},{name:'Tricep Rope Pushdown',sets:3,reps:'12'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Chest Fly',sets:3,reps:'12'},{name:'Overhead Dumbbell Tricep Extension',sets:3,reps:'12'}] },
+            { name:'RUN', exercises:[{name:'Easy Run',sets:1,reps:'20–25 min'}] },
+            { name:'CORE', exercises:[{name:'Plank',sets:3,reps:'45 sec'}] },
+          ],
+          finish: null, stretch:'Deep Squat Hold 45s · Hip Flexor 30s/side · Hamstring 30s · Child\'s Pose 45s · Ankle Rocks 10/side'
+        },
+        B: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Barbell Bench Press',sets:4,reps:'6'},{name:'Decline Pushups',sets:3,reps:'12'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Incline Dumbbell Press',sets:3,reps:'8'},{name:'Weighted Dips',sets:3,reps:'10'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Cable Fly',sets:3,reps:'12'},{name:'Skull Crushers',sets:3,reps:'10'}] },
+            { name:'RUN', exercises:[{name:'Easy Run',sets:1,reps:'25–30 min'}] },
+            { name:'CORE', exercises:[{name:'Plank',sets:3,reps:'60 sec'}] },
+          ],
+          finish: null, stretch:'Deep Squat Hold 45s · Hip Flexor 30s/side · Hamstring 30s · Child\'s Pose 45s · Ankle Rocks 10/side'
+        }
+      }
+    },
+    {
+      id: 2, label: 'LEGS + BIKE', sub: 'Legs · Easy Bike',
+      warmup: ['Light Bike — 2 min','Leg Swings — 15 each','Bodyweight Squats — 15','Glute Bridges — 12','World\'s Greatest Stretch — 5/side'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Squats',sets:3,reps:'8'},{name:'Standing Calf Raises',sets:3,reps:'15'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Romanian Deadlift',sets:3,reps:'10'},{name:'Walking Lunges',sets:3,reps:'10 each'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Step Ups',sets:3,reps:'10 each'},{name:'Hamstring Curl',sets:3,reps:'12'}] },
+            { name:'BIKE', exercises:[{name:'Easy Ride',sets:1,reps:'30–40 min'}] },
+            { name:'CORE', exercises:[{name:'Deadbugs',sets:3,reps:'12'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Hip Flexor 30s · Quad 30s · Deep Squat 45s · Ankle Rocks 10/side'
+        },
+        B: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Front Squat',sets:3,reps:'8'},{name:'Standing Calf Raises',sets:3,reps:'15'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Romanian Deadlift',sets:3,reps:'8'},{name:'Bulgarian Split Squats',sets:3,reps:'10 each'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Step Ups',sets:3,reps:'10 each'},{name:'Glute Bridge (weighted)',sets:3,reps:'12'}] },
+            { name:'BIKE', exercises:[{name:'Easy Ride',sets:1,reps:'40–50 min'}] },
+            { name:'CORE', exercises:[{name:'Deadbugs',sets:3,reps:'15'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Hip Flexor 30s · Quad 30s · Deep Squat 45s · Ankle Rocks 10/side'
+        }
+      }
+    },
+    {
+      id: 3, label: 'CONDITIONING', sub: 'Conditioning · Tempo Run · Core',
+      warmup: ['Light Jog — 2 minutes','Jumping Jacks — 25','World\'s Greatest Stretch — 5/side','High Knees — 20','Bodyweight Squats — 15'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'CIRCUIT × 3 ROUNDS', exercises:[{name:'Battle Rope',sets:3,reps:'30 sec'},{name:'Kettlebell Swings',sets:3,reps:'15'},{name:'Burpees',sets:3,reps:'10'},{name:'Mountain Climbers',sets:3,reps:'20'}] },
+            { name:'TEMPO RUN', exercises:[{name:'Tempo Run',sets:1,reps:'1.5–2 miles'}] },
+            { name:'CORE', exercises:[{name:'Russian Twists',sets:3,reps:'20'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Hip Flexor 30s · Calf 30s · Child\'s Pose 45s · Deep Squat 45s'
+        },
+        B: {
+          supersets: [
+            { name:'CIRCUIT × 4 ROUNDS', exercises:[{name:'Battle Rope',sets:4,reps:'30 sec'},{name:'Kettlebell Swings',sets:4,reps:'20'},{name:'Burpees',sets:4,reps:'12'},{name:'Mountain Climbers',sets:4,reps:'30'}] },
+            { name:'TEMPO RUN', exercises:[{name:'Tempo Run',sets:1,reps:'2–2.5 miles'}] },
+            { name:'CORE', exercises:[{name:'Russian Twists',sets:3,reps:'25'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Hip Flexor 30s · Calf 30s · Child\'s Pose 45s · Deep Squat 45s'
+        }
+      }
+    },
+    {
+      id: 4, label: 'BACK + BICEPS', sub: 'Back · Biceps · Long Bike',
+      warmup: ['Light Bike — 2 min','Band Pull Aparts — 20','Arm Circles — 20','World\'s Greatest Stretch — 5/side','Hang from Pull-up Bar — 20 sec'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Pull-ups',sets:3,reps:'max'},{name:'Bent Over Row',sets:3,reps:'10'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Lat Pulldown',sets:3,reps:'10'},{name:'Dumbbell Curl',sets:3,reps:'12'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Face Pulls',sets:3,reps:'15'},{name:'Hammer Curls',sets:3,reps:'12'}] },
+            { name:'BIKE', exercises:[{name:'Endurance Ride',sets:1,reps:'60–75 min'}] },
+            { name:'CORE', exercises:[{name:'Hanging Knee Raises',sets:3,reps:'12'}] },
+          ],
+          finish: null, stretch:'Lat Stretch 30s · Child\'s Pose 45s · Hamstring 30s · Hip Flexor 30s · Ankle Rocks 10/side'
+        },
+        B: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Pull-ups',sets:4,reps:'max'},{name:'Barbell Row',sets:3,reps:'8'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Lat Pulldown',sets:3,reps:'10'},{name:'EZ Bar Curl',sets:3,reps:'10'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Face Pull',sets:3,reps:'15'},{name:'Hammer Curl',sets:3,reps:'12'}] },
+            { name:'BIKE', exercises:[{name:'Endurance Ride',sets:1,reps:'75–90 min'}] },
+            { name:'CORE', exercises:[{name:'Hanging Leg Raises',sets:3,reps:'12'}] },
+          ],
+          finish: null, stretch:'Lat Stretch 30s · Child\'s Pose 45s · Hamstring 30s · Hip Flexor 30s · Ankle Rocks 10/side'
+        }
+      }
+    },
+    {
+      id: 5, label: 'SHOULDERS + CORE', sub: 'Shoulders · Core',
+      warmup: ['Light Bike — 2 min','Arm Circles — 20','Band Pull Aparts — 20','World\'s Greatest Stretch — 5/side','Pushups — 10'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Overhead Press',sets:3,reps:'8'},{name:'Lateral Raises',sets:3,reps:'12'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Rear Delt Fly',sets:3,reps:'12'},{name:'Front Raises',sets:3,reps:'10'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Shrugs',sets:3,reps:'12'},{name:'Plank Shoulder Taps',sets:3,reps:'20'}] },
+            { name:'CORE FINISHER', exercises:[{name:'Bicycle Crunch',sets:3,reps:'20'}] },
+          ],
+          finish: null, stretch:'Shoulder Stretch 30s · Child\'s Pose 45s · Deep Squat 45s · Hamstring 30s · Thoracic Rotation 10/side'
+        },
+        B: {
+          supersets: [
+            { name:'SUPERSET 1', exercises:[{name:'Overhead Press',sets:4,reps:'6'},{name:'Lateral Raises',sets:3,reps:'15'}] },
+            { name:'SUPERSET 2', exercises:[{name:'Arnold Press',sets:3,reps:'10'},{name:'Rear Delt Fly',sets:3,reps:'12'}] },
+            { name:'SUPERSET 3', exercises:[{name:'Shrugs',sets:3,reps:'12'},{name:'Plank Shoulder Taps',sets:3,reps:'24'}] },
+            { name:'CORE FINISHER', exercises:[{name:'Toe Touches',sets:3,reps:'20'}] },
+          ],
+          finish: null, stretch:'Shoulder Stretch 30s · Child\'s Pose 45s · Deep Squat 45s · Hamstring 30s · Thoracic Rotation 10/side'
+        }
+      }
+    },
+    {
+      id: 6, label: 'LONG RUN', sub: 'Long Run · Pull-up Practice',
+      warmup: ['Light Walk — 2 min','Leg Swings — 15 each','High Knees — 20','World\'s Greatest Stretch — 5/side','Bodyweight Squats — 15'],
+      phases: {
+        A: {
+          supersets: [
+            { name:'LONG RUN', exercises:[{name:'Long Run (W1: 2mi · W2: 2.5mi · W3: 3mi)',sets:1,reps:'see target'}] },
+            { name:'OPTIONAL PULL-UPS', exercises:[{name:'Pull-ups',sets:3,reps:'max'}] },
+            { name:'CORE', exercises:[{name:'Side Plank',sets:3,reps:'30 sec/side'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Calf 30s · Hip Flexor 30s · Deep Squat 45s · Child\'s Pose 45s'
+        },
+        B: {
+          supersets: [
+            { name:'LONG RUN', exercises:[{name:'Long Run (W4: 3.5mi · W5: 4mi · W6: 4–5mi)',sets:1,reps:'see target'}] },
+            { name:'OPTIONAL PULL-UPS', exercises:[{name:'Pull-ups',sets:3,reps:'max'}] },
+            { name:'CORE', exercises:[{name:'Side Plank',sets:3,reps:'40 sec/side'}] },
+          ],
+          finish: null, stretch:'Hamstring 30s · Calf 30s · Hip Flexor 30s · Deep Squat 45s · Child\'s Pose 45s'
+        }
+      }
+    },
+    {
+      id: 7, label: 'RECOVERY', sub: 'Recovery · Mobility',
+      warmup: [],
+      phases: {
+        A: {
+          supersets: [
+            { name:'OPTIONAL ACTIVITY', exercises:[{name:'Easy Walk',sets:1,reps:'20 min'}] },
+            { name:'MOBILITY FLOW', exercises:[{name:'Cat Cow',sets:1,reps:'10'},{name:'Deep Squat Hold',sets:1,reps:'45 sec'},{name:'Hip Flexor Stretch',sets:1,reps:'30 sec each'},{name:'Hamstring Stretch',sets:1,reps:'30 sec each'},{name:'Thoracic Rotations',sets:1,reps:'10/side'},{name:'Ankle Mobility Rocks',sets:1,reps:'10/side'}] },
+          ],
+          finish: null, stretch: null
+        },
+        B: {
+          supersets: [
+            { name:'OPTIONAL ACTIVITY', exercises:[{name:'Easy Walk',sets:1,reps:'20 min'}] },
+            { name:'MOBILITY FLOW', exercises:[{name:'Cat Cow',sets:1,reps:'10'},{name:'Deep Squat Hold',sets:1,reps:'45 sec'},{name:'Hip Flexor Stretch',sets:1,reps:'30 sec each'},{name:'Hamstring Stretch',sets:1,reps:'30 sec each'},{name:'Thoracic Rotations',sets:1,reps:'10/side'},{name:'Ankle Mobility Rocks',sets:1,reps:'10/side'}] },
+          ],
+          finish: null, stretch: null
+        }
+      }
+    },
+  ]
+};
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  activeWeek: 1,
+  activeDay: 0,
+  activeTab: 'workout', // workout | overview
+  checked: {},         // key: w{week}_d{day}_s{si}_e{ei}_i{i}
+  weights: {},         // key: w{week}_d{day}_s{si}_e{ei}
+  notes: {},           // key: w{week}_d{day}_s{si}_e{ei}
+  manualComplete: {},  // key: w{week}_d{day} => true
+  openNote: null,
+  timerSec: 90,
+  timerRunning: false,
+  timerInterval: null,
+  sidebarCollapsed: {},
+};
+
+// ═══════════════════════════════════════════════════════
+// FIREBASE STORAGE
+// ═══════════════════════════════════════════════════════
+async function save() {
+  if (!currentUser) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    try {
+      const data = {checked:state.checked, weights:state.weights, notes:state.notes, manualComplete:state.manualComplete, updatedAt: Date.now()};
+      await setDoc(doc(db, 'tracker', currentUser.uid), data);
+    } catch(e) { console.error('Save error:', e); }
+  }, 800); // debounce — waits 800ms after last action to batch writes
+}
+
+async function loadFromFirebase() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, 'tracker', currentUser.uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      state.checked = d.checked||{}; state.weights = d.weights||{}; state.notes = d.notes||{}; state.manualComplete = d.manualComplete||{};
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+function exportData() {
+  const data = {checked:state.checked, weights:state.weights, notes:state.notes, manualComplete:state.manualComplete, version:1};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'workout-progress.json'; a.click();
+}
+
+function importData(json) {
+  try {
+    const d = JSON.parse(json);
+    state.checked = d.checked||{}; state.weights = d.weights||{}; state.notes = d.notes||{}; state.manualComplete = d.manualComplete||{};
+    save(); render();
+  } catch(e) { alert('Invalid file.'); }
+}
+
+// ═══════════════════════════════════════════════════════
+// KEYS & HELPERS
+// ═══════════════════════════════════════════════════════
+function setKey(w,d,si,ei,i)  { return `w${w}_d${d}_s${si}_e${ei}_i${i}`; }
+function wKey(w,d,si,ei)      { return `w${w}_d${d}_s${si}_e${ei}`; }
+function noteKey(w,d,si,ei)   { return `note_w${w}_d${d}_s${si}_e${ei}`; }
+
+function getDayPhase(week) { return week <= 3 ? 'A' : 'B'; }
+
+function getDayData(dayIdx, week) {
+  const day = PROGRAM.days[dayIdx];
+  const phase = getDayPhase(week);
+  return { ...day, ...day.phases[phase], color: DAY_COLORS[dayIdx] };
+}
+
+function manualKey(w,d) { return `mc_w${w}_d${d}`; }
+
+function getDayProgress(week, dayIdx) {
+  if(state.manualComplete[manualKey(week,dayIdx)]) return 100;
+  const dd = getDayData(dayIdx, week);
+  let total=0, done=0;
+  dd.supersets.forEach((ss,si) => ss.exercises.forEach((ex,ei) => {
+    for(let i=0;i<ex.sets;i++) {
+      total++;
+      if(state.checked[setKey(week,dayIdx,si,ei,i)]) done++;
+    }
+  }));
+  return total===0 ? 0 : Math.round(done/total*100);
+}
+
+function getWeekProgress(week) {
+  let total=0,done=0;
+  PROGRAM.days.forEach((_,di) => { const p=getDayProgress(week,di); total+=100; done+=p; });
+  return Math.round(done/total);
+}
+
+function getTotalWorkouts() {
+  let done=0;
+  for(let w=1;w<=6;w++) PROGRAM.days.forEach((_,di)=>{ if(getDayProgress(w,di)===100)done++; });
+  return done;
+}
+function getAllPRs() {
+  const prs = {};
+  for(let w=1;w<=6;w++) {
+    PROGRAM.days.forEach((day,di) => {
+      const dd = getDayData(di, w);
+      dd.supersets.forEach((ss,si) => ss.exercises.forEach((ex,ei) => {
+        const k = wKey(w,di,si,ei);
+        const wt = parseFloat(state.weights[k]);
+        if(!isNaN(wt) && wt > 0) {
+          const key = `${di}_${si}_${ei}`;
+          if(!prs[key] || wt > prs[key].weight) {
+            prs[key] = { name:ex.name, weight:wt, week:w };
+          }
+        }
+      }));
+    });
+  }
+  return Object.values(prs).sort((a,b)=>b.weight-a.weight);
+}
+
+function isPR(week, dayIdx, si, ei) {
+  const k = wKey(week,dayIdx,si,ei);
+  const wt = parseFloat(state.weights[k]);
+  if(isNaN(wt)||wt<=0) return false;
+  for(let w=1;w<week;w++) {
+    const pk = wKey(w,dayIdx,si,ei);
+    const pw = parseFloat(state.weights[pk]);
+    if(!isNaN(pw) && pw >= wt) return false;
+  }
+  return true;
+}
+
+
+// ═══════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════
+function startTimer(sec) {
+  clearInterval(state.timerInterval);
+  state.timerSec = sec; state.timerRunning = true;
+  state.timerInterval = setInterval(()=>{
+    state.timerSec--;
+    if(state.timerSec<=0){ state.timerSec=0; state.timerRunning=false; clearInterval(state.timerInterval); }
+    updateTimer();
+  },1000);
+  updateTimer();
+}
+function stopTimer() { clearInterval(state.timerInterval); state.timerRunning=false; updateTimer(); }
+function updateTimer() {
+  const el = document.getElementById('timer-display');
+  if(!el) return;
+  const m=Math.floor(state.timerSec/60), s=String(state.timerSec%60).padStart(2,'0');
+  el.textContent = `${m}:${s}`;
+  el.className = 'timer-time' + (state.timerRunning ? (state.timerSec<=10?' urgent':' running') : '');
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="main">
+      ${renderSidebar()}
+      <div class="content" id="main-content">
+        ${renderContent()}
+      </div>
+    </div>
+    ${renderModal()}
+  `;
+  bindEvents();
+  updateTimer();
+}
+
+function renderHeader() {
+  const firstName = currentUser?.displayName?.split(' ')[0] || '';
+  return `<div class="header">
+    <div class="header-left">
+      <div class="sub">6-WEEK TRAINING PROGRAM</div>
+      <h1>LYV IN MOTION</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      ${renderTimer()}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${firstName ? `<div style="font-size:11px;font-weight:800;color:#fff;letter-spacing:.1em">${firstName.toUpperCase()}</div>` : ''}
+        <div style="display:flex;gap:6px">
+          <button class="hdr-btn" onclick="exportData()" title="Download backup">↓ BACKUP</button>
+          <button class="hdr-btn" onclick="signOutUser()">SIGN OUT</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTimer() {
+  const m=Math.floor(state.timerSec/60), s=String(state.timerSec%60).padStart(2,'0');
+  return `<div class="timer-widget">
+    <div class="timer-display">
+      <div class="timer-label">REST TIMER</div>
+      <div id="timer-display" class="timer-time${state.timerRunning?(state.timerSec<=10?' urgent':' running'):''}">${m}:${s}</div>
+    </div>
+    <div class="timer-btns">
+      <button class="tbtn" onclick="startTimer(60)">60s</button>
+      <button class="tbtn" onclick="startTimer(90)">90s</button>
+      <button class="tbtn" onclick="startTimer(120)">120s</button>
+      ${state.timerRunning?`<button class="tbtn stop" onclick="stopTimer()">■</button>`:''}
+    </div>
+  </div>`;
+}
+
+function renderSidebar() {
+  // flat 6×7 grid, each cell labeled W#D#
+  let cells = '';
+  for(let w=1;w<=6;w++) {
+    for(let d=0;d<7;d++) {
+      const pct = getDayProgress(w,d);
+      const color = DAY_COLORS[d];
+      const activeCell = w===state.activeWeek && d===state.activeDay;
+      const bg = pct===100 ? color : '#ffffff';
+      const border = activeCell
+        ? `2px solid var(--accent)`
+        : pct===100
+          ? `1px solid ${color}`
+          : '1px solid #cccccc';
+      const textColor = pct===100 ? '#000' : activeCell ? 'var(--accent)' : '#222';
+      const fontWeight = activeCell ? '900' : '700';
+      cells += `<div class="heatmap-cell${pct===100?' done':''}"
+        style="background:${bg};border:${border}"
+        onclick="setActiveDay(${w},${d})" title="W${w}D${d+1}: ${pct}%">
+        <div class="cell-label" style="color:${textColor};font-weight:${fontWeight}">${pct===100 ? '✓' : `W${w}D${d+1}`}</div>
+      </div>`;
+    }
+  }
+
+  let html = `<div class="sidebar">
+    <div class="heatmap-section">
+      <div class="heatmap-title">6-WEEK OVERVIEW</div>
+      <div class="heatmap-grid">${cells}</div>
+    </div>`;
+
+  for(let w=1;w<=6;w++) {
+    const collapsed = state.sidebarCollapsed[w];
+    const wpct = getWeekProgress(w);
+    const phase = w<=3?'1–3':'4–6';
+    html += `<div class="week-section">
+      <div class="week-header" onclick="toggleWeekCollapse(${w})">
+        <div>
+          <div class="week-label" style="color:${w===state.activeWeek?'#fff':'var(--text3)'}">WEEK ${w}</div>
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.1em">WKS ${phase} PHASE</div>
+        </div>
+        <div class="week-prog">${wpct}%</div>
+      </div>`;
+    if(!collapsed) {
+      PROGRAM.days.forEach((day,di) => {
+        const pct = getDayProgress(w,di);
+        const active = w===state.activeWeek&&di===state.activeDay;
+        html += `<div class="day-item${active?' active':''}" onclick="setActiveDay(${w},${di})">
+          <div class="day-dot" style="background:${pct===100?DAY_COLORS[di]:pct>0?DAY_COLORS[di]+'66':'var(--border2)'}"></div>
+          <div class="day-name">D${di+1} ${day.label}</div>
+          <div class="day-pct">${pct>0?pct+'%':''}</div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderContent() {
+  return `<div class="tab-row">
+    <div class="tab${state.activeTab==='workout'?' active':''}" onclick="setTab('workout')">WORKOUT</div>
+    <div class="tab${state.activeTab==='overview'?' active':''}" onclick="setTab('overview')">PROGRESS</div>
+  </div>
+  ${state.activeTab==='workout' ? renderWorkout() : renderOverview()}`;
+}
+
+function renderWorkout() {
+  const w = state.activeWeek, di = state.activeDay;
+  const dd = getDayData(di, w);
+  const pct = getDayProgress(w, di);
+  const phase = w<=3?'PHASE 1 (WKS 1–3)':'PHASE 2 (WKS 4–6)';
+  const mk = manualKey(w,di);
+  const isManual = !!state.manualComplete[mk];
+
+  let html = `<div class="day-header">
+    <div class="day-number-badge" style="color:${dd.color};border-color:${dd.color};background:${dd.color}18">${dd.id}</div>
+    <div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.12em">WEEK ${w} · ${phase}</div>
+      <div class="day-title">${dd.label}</div>
+      <div class="day-subtitle" style="color:${dd.color}">${dd.sub}</div>
+    </div>
+    <div class="week-badge">
+      <div class="wk">COMPLETE</div>
+      <div class="pct" style="color:${pct===100?dd.color:'#fff'}">${pct}%</div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${dd.color}"></div></div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:20px;gap:8px">
+    ${isManual
+      ? `<button class="hdr-btn" style="color:var(--text3);font-size:10px" onclick="unmarkDayComplete(${w},${di})">✕ UNMARK COMPLETE</button>`
+      : `<button class="hdr-btn primary" style="font-size:10px" onclick="markDayComplete(${w},${di})">✓ MARK DAY COMPLETE</button>`
+    }
+  </div>`;
+
+  // Warm-up
+  if(dd.warmup && dd.warmup.length>0) {
+    html += `<div class="section-label" style="color:var(--text3)">WARM-UP</div>
+    <div class="warmup-box" style="margin-bottom:22px">
+      ${dd.warmup.map(i=>`<div class="warmup-item"><div class="warmup-dot"></div><div class="warmup-text">${i}</div></div>`).join('')}
+    </div>`;
+  }
+
+  // Supersets
+  dd.supersets.forEach((ss,si) => {
+    html += `<div class="superset-block">
+      <div class="superset-title-row">
+        <div class="superset-title" style="color:${dd.color}">— ${ss.name}</div>
+        <div class="superset-line" style="background:${dd.color}22"></div>
+      </div>`;
+    ss.exercises.forEach((ex,ei) => {
+      const k = wKey(w,di,si,ei);
+      const nk = noteKey(w,di,si,ei);
+      const noteOpen = state.openNote === nk;
+      const pr = isPR(w,di,si,ei);
+      const wval = state.weights[k]||'';
+      const note = state.notes[nk]||'';
+      html += `<div class="exercise-card">
+        <div class="exercise-top">
+          <div>
+            <div class="exercise-name">${ex.name}</div>
+            <div class="exercise-meta">${ex.sets} × ${ex.reps}</div>
+          </div>
+          <div class="exercise-controls">
+            <span class="pr-badge${pr?' show':''}">⚡ PR</span>
+            <input class="weight-input" placeholder="lbs / kg" value="${escHtml(wval)}"
+              onchange="setWeight('${k}','${w}','${di}','${si}','${ei}',this.value)"
+              onclick="event.stopPropagation()">
+            <button class="note-btn${noteOpen?' active':''}" onclick="toggleNote('${nk}')">NOTE</button>
+          </div>
+        </div>
+        <div class="sets-row">`;
+      for(let i=0;i<ex.sets;i++) {
+        const sk = setKey(w,di,si,ei,i);
+        const done = !!state.checked[sk];
+        html += `<div class="set-box${done?' done':''}" style="--set-accent:${dd.color}" onclick="toggleSet('${sk}','${dd.color}')">
+          <div class="sl">SET</div><div class="sn">${done?'✓':i+1}</div>
+        </div>`;
+      }
+      html += `<button class="rest-btn" onclick="startTimer(90)">REST 90s</button>
+        </div>
+        ${noteOpen?`<div class="note-area"><textarea class="note-textarea" rows="2" placeholder="Notes — weight, how it felt, modifications..."
+          onchange="setNote('${nk}',this.value)">${escHtml(note)}</textarea></div>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  // Stretch
+  if(dd.stretch) {
+    html += `<div class="finish-box" style="border-color:var(--border);background:var(--surface)">
+      <div class="finish-arrow" style="color:var(--text3)">⟳</div>
+      <div><div class="finish-label" style="color:var(--text3)">COOLDOWN & STRETCH</div>
+      <div class="finish-text">${dd.stretch}</div></div>
+    </div>`;
+  }
+
+  // Complete banner
+  if(pct===100) {
+    const isManualBanner = !!state.manualComplete[manualKey(w,di)];
+    html += `<div class="complete-banner" style="border-color:${dd.color};background:${dd.color}10">
+      <h3 style="color:${dd.color}">WEEK ${w} · DAY ${dd.id} COMPLETE${isManualBanner?' ✓':''}</h3>
+      <p>${isManualBanner ? 'Marked complete manually. Great work!' : 'Rest up and come back stronger.'}</p>
+    </div>`;
+  }
+
+  return html;
+}
+
+function renderOverview() {
+  const totalDone = getTotalWorkouts();
+  const totalDays = 42;
+  const prs = getAllPRs();
+
+  // stats
+  let html = `<div class="overview-grid">
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent)">${totalDone}</div>
+      <div class="stat-label">WORKOUTS DONE</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent2)">${totalDays-totalDone}</div>
+      <div class="stat-label">REMAINING</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)">${Math.round(totalDone/totalDays*100)}%</div>
+      <div class="stat-label">PROGRAM DONE</div>
+    </div>
+  </div>`;
+
+  // Week-by-week completion table
+  html += `<div style="margin-bottom:28px">
+    <div class="section-label" style="color:var(--text3)">WEEK COMPLETION</div>
+    <div style="background:var(--surface);border:1px solid var(--border)">
+      <table class="completion-table">
+        <thead><tr>
+          <th>WEEK</th><th>PHASE</th>
+          ${PROGRAM.days.map(d=>`<th>D${d.id}</th>`).join('')}
+          <th>TOTAL</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4,5,6].map(w => {
+            const wpct = getWeekProgress(w);
+            return `<tr>
+              <td style="font-weight:800;color:${w===state.activeWeek?'#fff':'var(--text2)'}">W${w}</td>
+              <td style="color:var(--text3);font-size:11px">${w<=3?'P1':'P2'}</td>
+              ${PROGRAM.days.map((_,di)=>{
+                const p=getDayProgress(w,di);
+                const c = p===100?DAY_COLORS[di]:p>0?DAY_COLORS[di]+'88':'var(--text4)';
+                return `<td style="color:${c};font-weight:${p===100?800:400}">${p===100?'✓':p>0?p+'%':'—'}</td>`;
+              }).join('')}
+              <td style="font-weight:800;color:${wpct>0?'#fff':'var(--text4)'}">${wpct>0?wpct+'%':'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  // PRs
+  if(prs.length > 0) {
+    html += `<div>
+      <div class="section-label" style="color:var(--text3)">PERSONAL RECORDS</div>
+      <div class="pr-list">
+        ${prs.slice(0,15).map(pr=>`
+          <div class="pr-row">
+            <div>
+              <div class="pr-exercise">${pr.name}</div>
+              <div class="pr-week">WK ${pr.week} BEST</div>
+            </div>
+            <div class="pr-weight">⚡ ${pr.weight} lbs</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);padding:24px;text-align:center">
+      <div style="font-size:13px;color:var(--text3);font-family:'Barlow',sans-serif">Log weights during workouts to track PRs here.</div>
+    </div>`;
+  }
+
+  return html;
+}
+
+function renderModal() { return ''; }
+
+// ═══════════════════════════════════════════════════════
+// EVENT BINDING
+// ═══════════════════════════════════════════════════════
+function bindEvents() {}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════
+// ACTIONS (global, called from inline handlers)
+// ═══════════════════════════════════════════════════════
+function markDayComplete(w, di) {
+  state.manualComplete[manualKey(w,di)] = true;
+  save(); render();
+}
+
+function unmarkDayComplete(w, di) {
+  delete state.manualComplete[manualKey(w,di)];
+  save(); render();
+}
+
+function setActiveDay(week, dayIdx) {
+  state.activeWeek = week; state.activeDay = dayIdx; state.activeTab='workout';
+  render();
+}
+function setTab(tab) { state.activeTab=tab; render(); }
+function toggleWeekCollapse(w) { state.sidebarCollapsed[w]=!state.sidebarCollapsed[w]; render(); }
+
+function toggleSet(sk, color) {
+  state.checked[sk] = !state.checked[sk];
+  if(state.checked[sk]) startTimer(90);
+  save(); render();
+}
+
+function setWeight(k, w, di, si, ei, val) {
+  state.weights[k] = val;
+  save();
+  // update PR badge without full re-render
+  const prBadge = document.querySelectorAll('.pr-badge');
+  // just re-render exercises area
+  const pr = isPR(parseInt(w),parseInt(di),parseInt(si),parseInt(ei));
+  // lightweight: just save, full re-render on blur handled by onchange
+}
+
+function toggleNote(nk) {
+  state.openNote = state.openNote===nk ? null : nk;
+  render();
+}
+
+function setNote(nk, val) {
+  state.notes[nk] = val;
+  save();
+}
+
+function handleImport(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => importData(e.target.result);
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+async function signInWithGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) { console.error('Sign in error:', e); }
+}
+
+async function signOutUser() {
+  await signOut(auth);
+}
+
+function renderLoginScreen() {
+  document.getElementById('app').innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+      <div style="text-align:center;padding:40px">
+        <div style="font-size:11px;color:var(--text3);letter-spacing:.2em;margin-bottom:8px">6-WEEK TRAINING PROGRAM</div>
+        <div style="font-size:42px;font-weight:900;color:#fff;letter-spacing:.05em;margin-bottom:4px">LYV IN MOTION</div>
+        <div style="font-size:13px;color:var(--text3);font-family:'Barlow',sans-serif;margin-bottom:36px">Your personal training tracker</div>
+        <button onclick="signInWithGoogle()" style="
+          background:#fff;color:#000;border:none;padding:14px 28px;
+          font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;
+          letter-spacing:.12em;cursor:pointer;display:inline-flex;align-items:center;gap:10px;
+          transition:background .15s;
+        ">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          SIGN IN WITH GOOGLE
+        </button>
+      </div>
+    </div>`;
+}
+
+function renderAccessDenied(email) {
+  document.getElementById('app').innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+      <div style="text-align:center;padding:40px;max-width:400px">
+        <div style="font-size:32px;font-weight:900;color:#fff;margin-bottom:12px">LYV IN MOTION</div>
+        <div style="font-size:13px;color:var(--accent);font-family:'Barlow',sans-serif;margin-bottom:20px">Access denied for ${email}</div>
+        <div style="font-size:12px;color:var(--text3);font-family:'Barlow',sans-serif;margin-bottom:24px">This tracker is private.</div>
+        <button onclick="signOutUser()" style="background:none;border:1px solid var(--border2);color:var(--text3);padding:8px 16px;font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.1em">SIGN OUT</button>
+      </div>
+    </div>`;
+}
+
+// ── Boot ─────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)"><div style="font-size:12px;color:var(--text3);letter-spacing:.2em">LOADING...</div></div>`;
+    await loadFromFirebase();
+    render();
+  } else {
+    currentUser = null;
+    renderLoginScreen();
+  }
+});
+
+// ── Expose to window (ES module requires this for inline onclick) ──
+window.setActiveDay = setActiveDay;
+window.setTab = setTab;
+window.toggleWeekCollapse = toggleWeekCollapse;
+window.toggleSet = toggleSet;
+window.setWeight = setWeight;
+window.toggleNote = toggleNote;
+window.setNote = setNote;
+window.handleImport = handleImport;
+window.markDayComplete = markDayComplete;
+window.unmarkDayComplete = unmarkDayComplete;
+window.startTimer = startTimer;
+window.stopTimer = stopTimer;
+window.exportData = exportData;
+window.signInWithGoogle = signInWithGoogle;
+window.signOutUser = signOutUser;
+</script>
+</body>
+</html>
