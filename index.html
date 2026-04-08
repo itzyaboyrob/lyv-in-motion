@@ -176,8 +176,9 @@
   .day-tabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
   .day-tabs::-webkit-scrollbar{display:none}
   .day-tab{flex-shrink:0;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--text3);border:1px solid var(--border2);cursor:pointer;transition:all .12s;white-space:nowrap;background:none}
-  .day-tab.active{color:#fff;border-color:var(--accent);background:var(--accent)18}
-  .day-tab.done{border-color:var(--tab-color);color:var(--tab-color)}
+  .day-tab.active{color:#fff;border-color:var(--accent);background:#FF450018}
+  .day-tab.done{border-color:var(--tab-color);color:var(--tab-color);background:color-mix(in srgb,var(--tab-color) 10%,transparent)}
+  .day-tab.active.done{border-color:var(--tab-color);color:#fff;background:color-mix(in srgb,var(--tab-color) 25%,transparent)}
 
   /* ── session edit ── */
   .edit-btn{cursor:pointer;background:none;border:none;color:var(--text3);font-size:14px;padding:2px 6px;transition:color .12s;line-height:1}
@@ -607,16 +608,15 @@ function render() {
 
 function renderMobileNav() {
   const weekOptions = [1,2,3,4,5,6].map(w =>
-    `<option value="${w}" ${w===state.activeWeek?'selected':''}>${w<=3?'Week '+w+' (Phase 1)':'Week '+w+' (Phase 2)'}</option>`
+    `<option value="${w}" ${w===state.activeWeek?'selected':''}>${w<=3?'Week '+w+' (Foundation)':'Week '+w+' (Progression)'}</option>`
   ).join('');
   const dayTabs = PROGRAM.days.map((day,di) => {
     const pct = getDayProgress(state.activeWeek, di);
     const active = di===state.activeDay;
     const color = DAY_COLORS[di];
-    return `<div class="day-tab${active?' active':''}${pct===100?' done':''}"
-      style="${pct===100&&!active?'--tab-color:'+color+';':''}${active?'--tab-color:'+color+';':''}"
-      onclick="setActiveDay(${state.activeWeek},${di})">
-      D${di+1} · ${day.label.split(' ')[0]}
+    const classes = ['day-tab', active?'active':'', pct===100?'done':''].filter(Boolean).join(' ');
+    return `<div class="${classes}" style="--tab-color:${color}" onclick="setActiveDay(${state.activeWeek},${di})">
+      D${di+1} · ${day.label.split(' ')[0]}${pct===100?' ✓':''}
     </div>`;
   }).join('');
   return `<div class="mobile-nav">
@@ -975,7 +975,27 @@ function clearEdit(editKey) {
 
 function markDayComplete(w, di) {
   state.manualComplete[manualKey(w,di)] = true;
-  save(); render();
+  save();
+  // Auto-advance to next incomplete day
+  const nextDay = findNextIncompleteDay(w, di);
+  if (nextDay) {
+    state.activeWeek = nextDay.week;
+    state.activeDay = nextDay.day;
+  }
+  render();
+}
+
+function findNextIncompleteDay(currentWeek, currentDay) {
+  // Search forward from current position through all remaining days/weeks
+  for (let w = currentWeek; w <= 6; w++) {
+    const startDay = (w === currentWeek) ? currentDay + 1 : 0;
+    for (let d = startDay; d < 7; d++) {
+      if (getDayProgress(w, d) < 100) {
+        return { week: w, day: d };
+      }
+    }
+  }
+  return null; // all done!
 }
 
 function unmarkDayComplete(w, di) {
@@ -1095,6 +1115,7 @@ window.setNote = setNote;
 window.handleImport = handleImport;
 window.markDayComplete = markDayComplete;
 window.unmarkDayComplete = unmarkDayComplete;
+window.findNextIncompleteDay = findNextIncompleteDay;
 window.startTimer = startTimer;
 window.stopTimer = stopTimer;
 window.exportData = exportData;
