@@ -177,8 +177,8 @@
   .day-tabs::-webkit-scrollbar{display:none}
   .day-tab{flex-shrink:0;padding:7px 12px;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--text3);border:1px solid var(--border2);cursor:pointer;transition:all .12s;white-space:nowrap;background:none}
   .day-tab.active{color:#fff;border-color:var(--accent);background:#FF450018}
-  .day-tab.done{border-color:var(--tab-color);color:var(--tab-color);background:color-mix(in srgb,var(--tab-color) 10%,transparent)}
-  .day-tab.active.done{border-color:var(--tab-color);color:#fff;background:color-mix(in srgb,var(--tab-color) 25%,transparent)}
+  .day-tab.done{border-color:#1a5c2a;color:#fff;background:#00C896}
+  .day-tab.active.done{border-color:#1a5c2a;color:#fff;background:#00a87e;outline:2px solid #fff;outline-offset:-3px}
 
   /* ── session edit ── */
   .edit-btn{cursor:pointer;background:none;border:none;color:var(--text3);font-size:14px;padding:2px 6px;transition:color .12s;line-height:1}
@@ -986,16 +986,13 @@ function markDayComplete(w, di) {
 }
 
 function findNextIncompleteDay(currentWeek, currentDay) {
-  // Search forward from current position through all remaining days/weeks
   for (let w = currentWeek; w <= 6; w++) {
     const startDay = (w === currentWeek) ? currentDay + 1 : 0;
     for (let d = startDay; d < 7; d++) {
-      if (getDayProgress(w, d) < 100) {
-        return { week: w, day: d };
-      }
+      if (getDayProgress(w, d) < 100) return { week: w, day: d };
     }
   }
-  return null; // all done!
+  return null;
 }
 
 function unmarkDayComplete(w, di) {
@@ -1096,6 +1093,9 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)"><div style="font-size:12px;color:var(--text3);letter-spacing:.2em">LOADING...</div></div>`;
     await loadFromFirebase();
+    // Start on next incomplete day rather than always W1D1
+    const next = findNextIncompleteDay(1, -1);
+    if (next) { state.activeWeek = next.week; state.activeDay = next.day; }
     render();
   } else {
     currentUser = null;
