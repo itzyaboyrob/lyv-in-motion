@@ -221,6 +221,7 @@ const db = getFirestore(app);
 // ── No email restriction — anyone with Google can sign in ──
 let currentUser = null;
 let saveTimeout = null;
+
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA
 // ═══════════════════════════════════════════════════════
@@ -432,13 +433,14 @@ let state = {
   weights: {},
   notes: {},
   manualComplete: {},
-  sessionEdits: {},  // key: w{w}_d{d}_s{si}_e{ei} => {name, sets, reps}
+  sessionEdits: {},
   openNote: null,
   openEdit: null,
   timerSec: 90,
   timerRunning: false,
   timerInterval: null,
   sidebarCollapsed: {},
+  mobileDayTabsScrollLeft: 0,
 };
 
 // ═══════════════════════════════════════════════════════
@@ -449,9 +451,18 @@ async function save() {
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     try {
-      const data = {checked:state.checked, weights:state.weights, notes:state.notes, manualComplete:state.manualComplete, sessionEdits:state.sessionEdits, updatedAt: Date.now()};
+      const data = {
+        checked: state.checked,
+        weights: state.weights,
+        notes: state.notes,
+        manualComplete: state.manualComplete,
+        sessionEdits: state.sessionEdits,
+        updatedAt: Date.now()
+      };
       await setDoc(doc(db, 'tracker', currentUser.uid), data);
-    } catch(e) { console.error('Save error:', e); }
+    } catch(e) {
+      console.error('Save error:', e);
+    }
   }, 800);
 }
 
@@ -461,24 +472,46 @@ async function loadFromFirebase() {
     const snap = await getDoc(doc(db, 'tracker', currentUser.uid));
     if (snap.exists()) {
       const d = snap.data();
-      state.checked = d.checked||{}; state.weights = d.weights||{}; state.notes = d.notes||{}; state.manualComplete = d.manualComplete||{}; state.sessionEdits = d.sessionEdits||{};
+      state.checked = d.checked || {};
+      state.weights = d.weights || {};
+      state.notes = d.notes || {};
+      state.manualComplete = d.manualComplete || {};
+      state.sessionEdits = d.sessionEdits || {};
     }
-  } catch(e) { console.error('Load error:', e); }
+  } catch(e) {
+    console.error('Load error:', e);
+  }
 }
 
 function exportData() {
-  const data = {checked:state.checked, weights:state.weights, notes:state.notes, manualComplete:state.manualComplete, sessionEdits:state.sessionEdits, version:1};
-  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'workout-progress.json'; a.click();
+  const data = {
+    checked: state.checked,
+    weights: state.weights,
+    notes: state.notes,
+    manualComplete: state.manualComplete,
+    sessionEdits: state.sessionEdits,
+    version: 1
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'workout-progress.json';
+  a.click();
 }
 
 function importData(json) {
   try {
     const d = JSON.parse(json);
-    state.checked = d.checked||{}; state.weights = d.weights||{}; state.notes = d.notes||{}; state.manualComplete = d.manualComplete||{};
-    save(); render();
-  } catch(e) { alert('Invalid file.'); }
+    state.checked = d.checked || {};
+    state.weights = d.weights || {};
+    state.notes = d.notes || {};
+    state.manualComplete = d.manualComplete || {};
+    state.sessionEdits = d.sessionEdits || {};
+    save();
+    render();
+  } catch(e) {
+    alert('Invalid file.');
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -488,20 +521,33 @@ function setKey(w,d,si,ei,i)  { return `w${w}_d${d}_s${si}_e${ei}_i${i}`; }
 function wKey(w,d,si,ei)      { return `w${w}_d${d}_s${si}_e${ei}`; }
 function noteKey(w,d,si,ei)   { return `note_w${w}_d${d}_s${si}_e${ei}`; }
 
-function getDayPhase(week) { return week <= 3 ? 'A' : 'B'; }
+function getDayPhase(week) {
+  return week <= 3 ? 'A' : 'B';
+}
 
 function getDayData(dayIdx, week) {
   const day = PROGRAM.days[dayIdx];
   const phase = getDayPhase(week);
-  const wi = week - 1; // 0-indexed
-  const cardioMap = { '__D1__':'d1','__D2__':'d2','__D3__':'d3','__D4__':'d4','__D5__':'d5','__D6__':'d6','__D7__':'d7' };
+  const wi = week - 1;
+  const cardioMap = {
+    '__D1__':'d1',
+    '__D2__':'d2',
+    '__D3__':'d3',
+    '__D4__':'d4',
+    '__D5__':'d5',
+    '__D6__':'d6',
+    '__D7__':'d7'
+  };
   const phaseData = day.phases[phase];
   const supersets = phaseData.supersets.map(ss => ({
     ...ss,
     exercises: ss.exercises.map(ex => {
       let reps = ex.reps;
       for (const [token, key] of Object.entries(cardioMap)) {
-        if (reps === token) { reps = CARDIO[key][wi] || reps; break; }
+        if (reps === token) {
+          reps = CARDIO[key][wi] || reps;
+          break;
+        }
       }
       return { ...ex, reps };
     })
@@ -509,86 +555,124 @@ function getDayData(dayIdx, week) {
   return { ...day, ...phaseData, supersets, color: DAY_COLORS[dayIdx] };
 }
 
-function manualKey(w,d) { return `mc_w${w}_d${d}`; }
+function manualKey(w,d) {
+  return `mc_w${w}_d${d}`;
+}
 
 function getDayProgress(week, dayIdx) {
-  if(state.manualComplete[manualKey(week,dayIdx)]) return 100;
+  if (state.manualComplete[manualKey(week, dayIdx)]) return 100;
+
   const dd = getDayData(dayIdx, week);
-  let total=0, done=0;
-  dd.supersets.forEach((ss,si) => ss.exercises.forEach((ex,ei) => {
-    for(let i=0;i<ex.sets;i++) {
+  let total = 0;
+  let done = 0;
+
+  dd.supersets.forEach((ss, si) => ss.exercises.forEach((ex, ei) => {
+    const editKey = wKey(week, dayIdx, si, ei);
+    const sessionEdit = state.sessionEdits[editKey];
+    const displaySets = sessionEdit?.sets || ex.sets;
+
+    for (let i = 0; i < displaySets; i++) {
       total++;
-      if(state.checked[setKey(week,dayIdx,si,ei,i)]) done++;
+      if (state.checked[setKey(week, dayIdx, si, ei, i)]) done++;
     }
   }));
-  return total===0 ? 0 : Math.round(done/total*100);
+
+  return total === 0 ? 0 : Math.round(done / total * 100);
 }
 
 function getWeekProgress(week) {
-  let total=0,done=0;
-  PROGRAM.days.forEach((_,di) => { const p=getDayProgress(week,di); total+=100; done+=p; });
-  return Math.round(done/total);
+  let total = 0;
+  let done = 0;
+  PROGRAM.days.forEach((_, di) => {
+    const p = getDayProgress(week, di);
+    total += 100;
+    done += p;
+  });
+  return Math.round(done / total);
 }
 
 function getTotalWorkouts() {
-  let done=0;
-  for(let w=1;w<=6;w++) PROGRAM.days.forEach((_,di)=>{ if(getDayProgress(w,di)===100)done++; });
+  let done = 0;
+  for (let w = 1; w <= 6; w++) {
+    PROGRAM.days.forEach((_, di) => {
+      if (getDayProgress(w, di) === 100) done++;
+    });
+  }
   return done;
 }
+
 function getAllPRs() {
   const prs = {};
-  for(let w=1;w<=6;w++) {
-    PROGRAM.days.forEach((day,di) => {
+  for (let w = 1; w <= 6; w++) {
+    PROGRAM.days.forEach((day, di) => {
       const dd = getDayData(di, w);
-      dd.supersets.forEach((ss,si) => ss.exercises.forEach((ex,ei) => {
-        const k = wKey(w,di,si,ei);
+      dd.supersets.forEach((ss, si) => ss.exercises.forEach((ex, ei) => {
+        const k = wKey(w, di, si, ei);
         const wt = parseFloat(state.weights[k]);
-        if(!isNaN(wt) && wt > 0) {
+        if (!isNaN(wt) && wt > 0) {
           const key = `${di}_${si}_${ei}`;
-          if(!prs[key] || wt > prs[key].weight) {
-            prs[key] = { name:ex.name, weight:wt, week:w };
+          if (!prs[key] || wt > prs[key].weight) {
+            prs[key] = { name: ex.name, weight: wt, week: w };
           }
         }
       }));
     });
   }
-  return Object.values(prs).sort((a,b)=>b.weight-a.weight);
+  return Object.values(prs).sort((a, b) => b.weight - a.weight);
 }
 
 function isPR(week, dayIdx, si, ei) {
-  const k = wKey(week,dayIdx,si,ei);
+  const k = wKey(week, dayIdx, si, ei);
   const wt = parseFloat(state.weights[k]);
-  if(isNaN(wt)||wt<=0) return false;
-  for(let w=1;w<week;w++) {
-    const pk = wKey(w,dayIdx,si,ei);
+  if (isNaN(wt) || wt <= 0) return false;
+
+  for (let w = 1; w < week; w++) {
+    const pk = wKey(w, dayIdx, si, ei);
     const pw = parseFloat(state.weights[pk]);
-    if(!isNaN(pw) && pw >= wt) return false;
+    if (!isNaN(pw) && pw >= wt) return false;
   }
   return true;
 }
-
 
 // ═══════════════════════════════════════════════════════
 // TIMER
 // ═══════════════════════════════════════════════════════
 function startTimer(sec) {
   clearInterval(state.timerInterval);
-  state.timerSec = sec; state.timerRunning = true;
-  state.timerInterval = setInterval(()=>{
+  state.timerSec = sec;
+  state.timerRunning = true;
+
+  state.timerInterval = setInterval(() => {
     state.timerSec--;
-    if(state.timerSec<=0){ state.timerSec=0; state.timerRunning=false; clearInterval(state.timerInterval); }
+    if (state.timerSec <= 0) {
+      state.timerSec = 0;
+      state.timerRunning = false;
+      clearInterval(state.timerInterval);
+    }
     updateTimer();
-  },1000);
+  }, 1000);
+
   updateTimer();
 }
-function stopTimer() { clearInterval(state.timerInterval); state.timerRunning=false; updateTimer(); }
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+  state.timerRunning = false;
+  updateTimer();
+}
+
 function updateTimer() {
-  const m=Math.floor(state.timerSec/60), s=String(state.timerSec%60).padStart(2,'0');
-  const cls = 'timer-time' + (state.timerRunning ? (state.timerSec<=10?' urgent':' running') : '');
+  const m = Math.floor(state.timerSec / 60);
+  const s = String(state.timerSec % 60).padStart(2, '0');
+  const cls = 'timer-time' + (state.timerRunning ? (state.timerSec <= 10 ? ' urgent' : ' running') : '');
   const txt = `${m}:${s}`;
-  ['timer-display','timer-display-mobile'].forEach(id => {
+
+  ['timer-display', 'timer-display-mobile'].forEach(id => {
     const el = document.getElementById(id);
-    if(el){ el.textContent = txt; el.className = cls; }
+    if (el) {
+      el.textContent = txt;
+      el.className = cls;
+    }
   });
 }
 
@@ -596,6 +680,11 @@ function updateTimer() {
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
+  const existingDayTabs = document.querySelector('.day-tabs');
+  if (existingDayTabs) {
+    state.mobileDayTabsScrollLeft = existingDayTabs.scrollLeft;
+  }
+
   const app = document.getElementById('app');
   app.innerHTML = `
     ${renderHeader()}
@@ -609,13 +698,16 @@ function render() {
     </div>
     ${renderModal()}
   `;
+
   bindEvents();
   updateTimer();
 }
 
 function renderMobileTimer() {
-  const m=Math.floor(state.timerSec/60), s=String(state.timerSec%60).padStart(2,'0');
-  const timeClass = 'timer-time' + (state.timerRunning ? (state.timerSec<=10?' urgent':' running') : '');
+  const m = Math.floor(state.timerSec / 60);
+  const s = String(state.timerSec % 60).padStart(2, '0');
+  const timeClass = 'timer-time' + (state.timerRunning ? (state.timerSec <= 10 ? ' urgent' : ' running') : '');
+
   return `<div class="mobile-timer">
     <div style="display:flex;flex-direction:column">
       <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:2px">REST TIMER</div>
@@ -632,17 +724,19 @@ function renderMobileTimer() {
 
 function renderMobileNav() {
   const weekOptions = [1,2,3,4,5,6].map(w =>
-    `<option value="${w}" ${w===state.activeWeek?'selected':''}>${w<=3?'Week '+w+' (Foundation)':'Week '+w+' (Progression)'}</option>`
+    `<option value="${w}" ${w === state.activeWeek ? 'selected' : ''}>${w <= 3 ? 'Week ' + w + ' (Foundation)' : 'Week ' + w + ' (Progression)'}</option>`
   ).join('');
-  const dayTabs = PROGRAM.days.map((day,di) => {
+
+  const dayTabs = PROGRAM.days.map((day, di) => {
     const pct = getDayProgress(state.activeWeek, di);
-    const active = di===state.activeDay;
+    const active = di === state.activeDay;
     const color = DAY_COLORS[di];
-    const classes = ['day-tab', active?'active':'', pct===100?'done':''].filter(Boolean).join(' ');
+    const classes = ['day-tab', active ? 'active' : '', pct === 100 ? 'done' : ''].filter(Boolean).join(' ');
     return `<div class="${classes}" style="--tab-color:${color}" onclick="setActiveDay(${state.activeWeek},${di})">
-      D${di+1} · ${day.label.split(' ')[0]}${pct===100?' ✓':''}
+      D${di + 1} · ${day.label.split(' ')[0]}${pct === 100 ? ' ✓' : ''}
     </div>`;
   }).join('');
+
   return `<div class="mobile-nav">
     <select onchange="setActiveWeek(parseInt(this.value))">${weekOptions}</select>
     <div class="day-tabs">${dayTabs}</div>
@@ -670,41 +764,43 @@ function renderHeader() {
 }
 
 function renderTimer() {
-  const m=Math.floor(state.timerSec/60), s=String(state.timerSec%60).padStart(2,'0');
+  const m = Math.floor(state.timerSec / 60);
+  const s = String(state.timerSec % 60).padStart(2, '0');
+
   return `<div class="timer-widget">
     <div class="timer-display">
       <div class="timer-label">REST TIMER</div>
-      <div id="timer-display" class="timer-time${state.timerRunning?(state.timerSec<=10?' urgent':' running'):''}">${m}:${s}</div>
+      <div id="timer-display" class="timer-time${state.timerRunning ? (state.timerSec <= 10 ? ' urgent' : ' running') : ''}">${m}:${s}</div>
     </div>
     <div class="timer-btns">
       <button class="tbtn" onclick="startTimer(60)">60s</button>
       <button class="tbtn" onclick="startTimer(90)">90s</button>
       <button class="tbtn" onclick="startTimer(120)">120s</button>
-      ${state.timerRunning?`<button class="tbtn stop" onclick="stopTimer()">■</button>`:''}
+      ${state.timerRunning ? `<button class="tbtn stop" onclick="stopTimer()">■</button>` : ''}
     </div>
   </div>`;
 }
 
 function renderSidebar() {
-  // flat 6×7 grid, each cell labeled W#D#
   let cells = '';
-  for(let w=1;w<=6;w++) {
-    for(let d=0;d<7;d++) {
-      const pct = getDayProgress(w,d);
+  for (let w = 1; w <= 6; w++) {
+    for (let d = 0; d < 7; d++) {
+      const pct = getDayProgress(w, d);
       const color = DAY_COLORS[d];
-      const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : '#ffffff';
+      const activeCell = w === state.activeWeek && d === state.activeDay;
+      const bg = pct === 100 ? color : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
-        : pct===100
+        : pct === 100
           ? `1px solid ${color}`
           : '1px solid #cccccc';
-      const textColor = pct===100 ? '#000' : activeCell ? 'var(--accent)' : '#222';
+      const textColor = pct === 100 ? '#000' : activeCell ? 'var(--accent)' : '#222';
       const fontWeight = activeCell ? '900' : '700';
-      cells += `<div class="heatmap-cell${pct===100?' done':''}"
+
+      cells += `<div class="heatmap-cell${pct === 100 ? ' done' : ''}"
         style="background:${bg};border:${border}"
-        onclick="setActiveDay(${w},${d})" title="W${w}D${d+1}: ${pct}%">
-        <div class="cell-label" style="color:${textColor};font-weight:${fontWeight}">${pct===100 ? '✓' : `W${w}D${d+1}`}</div>
+        onclick="setActiveDay(${w},${d})" title="W${w}D${d + 1}: ${pct}%">
+        <div class="cell-label" style="color:${textColor};font-weight:${fontWeight}">${pct === 100 ? '✓' : `W${w}D${d + 1}`}</div>
       </div>`;
     }
   }
@@ -715,49 +811,54 @@ function renderSidebar() {
       <div class="heatmap-grid">${cells}</div>
     </div>`;
 
-  for(let w=1;w<=6;w++) {
+  for (let w = 1; w <= 6; w++) {
     const collapsed = state.sidebarCollapsed[w];
     const wpct = getWeekProgress(w);
-    const phase = w<=3?'1–3':'4–6';
+    const phase = w <= 3 ? '1–3' : '4–6';
+
     html += `<div class="week-section">
       <div class="week-header" onclick="toggleWeekCollapse(${w})">
         <div>
-          <div class="week-label" style="color:${w===state.activeWeek?'#fff':'var(--text3)'}">WEEK ${w}</div>
+          <div class="week-label" style="color:${w === state.activeWeek ? '#fff' : 'var(--text3)'}">WEEK ${w}</div>
           <div style="font-size:9px;color:var(--text3);letter-spacing:.1em">WKS ${phase} PHASE</div>
         </div>
         <div class="week-prog">${wpct}%</div>
       </div>`;
-    if(!collapsed) {
-      PROGRAM.days.forEach((day,di) => {
-        const pct = getDayProgress(w,di);
-        const active = w===state.activeWeek&&di===state.activeDay;
-        html += `<div class="day-item${active?' active':''}" onclick="setActiveDay(${w},${di})">
-          <div class="day-dot" style="background:${pct===100?DAY_COLORS[di]:pct>0?DAY_COLORS[di]+'66':'var(--border2)'}"></div>
-          <div class="day-name">D${di+1} ${day.label}</div>
-          <div class="day-pct">${pct>0?pct+'%':''}</div>
+
+    if (!collapsed) {
+      PROGRAM.days.forEach((day, di) => {
+        const pct = getDayProgress(w, di);
+        const active = w === state.activeWeek && di === state.activeDay;
+        html += `<div class="day-item${active ? ' active' : ''}" onclick="setActiveDay(${w},${di})">
+          <div class="day-dot" style="background:${pct === 100 ? DAY_COLORS[di] : pct > 0 ? DAY_COLORS[di] + '66' : 'var(--border2)'}"></div>
+          <div class="day-name">D${di + 1} ${day.label}</div>
+          <div class="day-pct">${pct > 0 ? pct + '%' : ''}</div>
         </div>`;
       });
     }
+
     html += `</div>`;
   }
+
   html += `</div>`;
   return html;
 }
 
 function renderContent() {
   return `<div class="tab-row">
-    <div class="tab${state.activeTab==='workout'?' active':''}" onclick="setTab('workout')">WORKOUT</div>
-    <div class="tab${state.activeTab==='overview'?' active':''}" onclick="setTab('overview')">PROGRESS</div>
+    <div class="tab${state.activeTab === 'workout' ? ' active' : ''}" onclick="setTab('workout')">WORKOUT</div>
+    <div class="tab${state.activeTab === 'overview' ? ' active' : ''}" onclick="setTab('overview')">PROGRESS</div>
   </div>
-  ${state.activeTab==='workout' ? renderWorkout() : renderOverview()}`;
+  ${state.activeTab === 'workout' ? renderWorkout() : renderOverview()}`;
 }
 
 function renderWorkout() {
-  const w = state.activeWeek, di = state.activeDay;
+  const w = state.activeWeek;
+  const di = state.activeDay;
   const dd = getDayData(di, w);
   const pct = getDayProgress(w, di);
-  const phase = w<=3?'FOUNDATION PHASE (WKS 1–3)':'PROGRESSION PHASE (WKS 4–6)';
-  const mk = manualKey(w,di);
+  const phase = w <= 3 ? 'FOUNDATION PHASE (WKS 1–3)' : 'PROGRESSION PHASE (WKS 4–6)';
+  const mk = manualKey(w, di);
   const isManual = !!state.manualComplete[mk];
 
   let html = `<div class="day-header">
@@ -769,7 +870,7 @@ function renderWorkout() {
     </div>
     <div class="week-badge">
       <div class="wk">COMPLETE</div>
-      <div class="pct" style="color:${pct===100?dd.color:'#fff'}">${pct}%</div>
+      <div class="pct" style="color:${pct === 100 ? dd.color : '#fff'}">${pct}%</div>
     </div>
   </div>
   <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${dd.color}"></div></div>
@@ -780,32 +881,31 @@ function renderWorkout() {
     }
   </div>`;
 
-  // Warm-up
-  if(dd.warmup && dd.warmup.length>0) {
+  if (dd.warmup && dd.warmup.length > 0) {
     html += `<div class="section-label" style="color:var(--text3)">WARM-UP</div>
     <div class="warmup-box" style="margin-bottom:22px">
-      ${dd.warmup.map(i=>`<div class="warmup-item"><div class="warmup-dot"></div><div class="warmup-text">${i}</div></div>`).join('')}
+      ${dd.warmup.map(i => `<div class="warmup-item"><div class="warmup-dot"></div><div class="warmup-text">${i}</div></div>`).join('')}
     </div>`;
   }
 
-  // Supersets
-  dd.supersets.forEach((ss,si) => {
+  dd.supersets.forEach((ss, si) => {
     html += `<div class="superset-block">
       <div class="superset-title-row">
         <div class="superset-title" style="color:${dd.color}">— ${ss.name}</div>
         <div class="superset-line" style="background:${dd.color}22"></div>
       </div>`;
-    ss.exercises.forEach((ex,ei) => {
-      const k = wKey(w,di,si,ei);
-      const nk = noteKey(w,di,si,ei);
+
+    ss.exercises.forEach((ex, ei) => {
+      const k = wKey(w, di, si, ei);
+      const nk = noteKey(w, di, si, ei);
       const ek = `edit_${w}_${di}_${si}_${ei}`;
       const noteOpen = state.openNote === nk;
       const editOpen = state.openEdit === ek;
-      const pr = isPR(w,di,si,ei);
-      const wval = state.weights[k]||'';
-      const note = state.notes[nk]||'';
-      // apply session edit if exists
-      const editKey = wKey(w,di,si,ei);
+      const pr = isPR(w, di, si, ei);
+      const wval = state.weights[k] || '';
+      const note = state.notes[nk] || '';
+
+      const editKey = wKey(w, di, si, ei);
       const sessionEdit = state.sessionEdits[editKey];
       const displayName = sessionEdit?.name || ex.name;
       const displaySets = sessionEdit?.sets || ex.sets;
@@ -817,20 +917,20 @@ function renderWorkout() {
           <div style="flex:1;min-width:0">
             <div class="exercise-name" style="display:flex;align-items:center;gap:6px">
               <span>${escHtml(displayName)}</span>
-              ${isEdited?`<span style="font-size:9px;color:var(--accent2);letter-spacing:.08em">EDITED</span>`:''}
+              ${isEdited ? `<span style="font-size:9px;color:var(--accent2);letter-spacing:.08em">EDITED</span>` : ''}
             </div>
             <div class="exercise-meta">${displaySets} × ${displayReps}</div>
           </div>
           <div class="exercise-controls">
-            <span class="pr-badge${pr?' show':''}">⚡ PR</span>
+            <span class="pr-badge${pr ? ' show' : ''}">⚡ PR</span>
             <input class="weight-input" placeholder="lbs / kg" value="${escHtml(wval)}"
               onchange="setWeight('${k}','${w}','${di}','${si}','${ei}',this.value)"
               onclick="event.stopPropagation()">
             <button class="edit-btn" onclick="toggleEdit('${ek}')" title="Edit exercise">✏️</button>
-            <button class="note-btn${noteOpen?' active':''}" onclick="toggleNote('${nk}')">NOTE</button>
+            <button class="note-btn${noteOpen ? ' active' : ''}" onclick="toggleNote('${nk}')">NOTE</button>
           </div>
         </div>
-        ${editOpen?`<div class="edit-panel">
+        ${editOpen ? `<div class="edit-panel">
           <label>EXERCISE NAME</label>
           <input class="edit-input" id="edit-name-${ek}" value="${escHtml(displayName)}" placeholder="Exercise name">
           <div class="edit-row">
@@ -840,28 +940,30 @@ function renderWorkout() {
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="edit-save" onclick="saveEdit('${ek}','${editKey}')">SAVE</button>
             <button class="edit-cancel" onclick="toggleEdit('${ek}')">CANCEL</button>
-            ${isEdited?`<button class="edit-cancel" onclick="clearEdit('${editKey}')" style="color:var(--accent);border-color:var(--accent)44;margin-left:auto">RESET</button>`:''}
+            ${isEdited ? `<button class="edit-cancel" onclick="clearEdit('${editKey}')" style="color:var(--accent);border-color:var(--accent)44;margin-left:auto">RESET</button>` : ''}
           </div>
-        </div>`:''}
+        </div>` : ''}
         <div class="sets-row">`;
-      for(let i=0;i<displaySets;i++) {
-        const sk = setKey(w,di,si,ei,i);
+
+      for (let i = 0; i < displaySets; i++) {
+        const sk = setKey(w, di, si, ei, i);
         const done = !!state.checked[sk];
-        html += `<div class="set-box${done?' done':''}" style="--set-accent:${dd.color}" onclick="toggleSet('${sk}','${dd.color}')">
-          <div class="sl">SET</div><div class="sn">${done?'✓':i+1}</div>
+        html += `<div class="set-box${done ? ' done' : ''}" style="--set-accent:${dd.color}" onclick="toggleSet('${sk}','${dd.color}')">
+          <div class="sl">SET</div><div class="sn">${done ? '✓' : i + 1}</div>
         </div>`;
       }
+
       html += `<button class="rest-btn" onclick="startTimer(90)">REST 90s</button>
         </div>
-        ${noteOpen?`<div class="note-area"><textarea class="note-textarea" rows="2" placeholder="Notes — weight, how it felt, modifications..."
-          onchange="setNote('${nk}',this.value)">${escHtml(note)}</textarea></div>`:''}
+        ${noteOpen ? `<div class="note-area"><textarea class="note-textarea" rows="2" placeholder="Notes — weight, how it felt, modifications..."
+          onchange="setNote('${nk}',this.value)">${escHtml(note)}</textarea></div>` : ''}
       </div>`;
     });
+
     html += `</div>`;
   });
 
-  // Stretch
-  if(dd.stretch) {
+  if (dd.stretch) {
     html += `<div class="finish-box" style="border-color:var(--border);background:var(--surface)">
       <div class="finish-arrow" style="color:var(--text3)">⟳</div>
       <div><div class="finish-label" style="color:var(--text3)">COOLDOWN & STRETCH</div>
@@ -869,11 +971,10 @@ function renderWorkout() {
     </div>`;
   }
 
-  // Complete banner
-  if(pct===100) {
-    const isManualBanner = !!state.manualComplete[manualKey(w,di)];
+  if (pct === 100) {
+    const isManualBanner = !!state.manualComplete[manualKey(w, di)];
     html += `<div class="complete-banner" style="border-color:${dd.color};background:${dd.color}10">
-      <h3 style="color:${dd.color}">WEEK ${w} · DAY ${dd.id} COMPLETE${isManualBanner?' ✓':''}</h3>
+      <h3 style="color:${dd.color}">WEEK ${w} · DAY ${dd.id} COMPLETE${isManualBanner ? ' ✓' : ''}</h3>
       <p>${isManualBanner ? 'Marked complete manually. Great work!' : 'Rest up and come back stronger.'}</p>
     </div>`;
   }
@@ -886,44 +987,42 @@ function renderOverview() {
   const totalDays = 42;
   const prs = getAllPRs();
 
-  // stats
   let html = `<div class="overview-grid">
     <div class="stat-card">
       <div class="stat-value" style="color:var(--accent)">${totalDone}</div>
       <div class="stat-label">WORKOUTS DONE</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" style="color:var(--accent2)">${totalDays-totalDone}</div>
+      <div class="stat-value" style="color:var(--accent2)">${totalDays - totalDone}</div>
       <div class="stat-label">REMAINING</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" style="color:var(--green)">${Math.round(totalDone/totalDays*100)}%</div>
+      <div class="stat-value" style="color:var(--green)">${Math.round(totalDone / totalDays * 100)}%</div>
       <div class="stat-label">PROGRAM DONE</div>
     </div>
   </div>`;
 
-  // Week-by-week completion table
   html += `<div style="margin-bottom:28px">
     <div class="section-label" style="color:var(--text3)">WEEK COMPLETION</div>
     <div style="background:var(--surface);border:1px solid var(--border)">
       <table class="completion-table">
         <thead><tr>
           <th>WEEK</th><th>PHASE</th>
-          ${PROGRAM.days.map(d=>`<th>D${d.id}</th>`).join('')}
+          ${PROGRAM.days.map(d => `<th>D${d.id}</th>`).join('')}
           <th>TOTAL</th>
         </tr></thead>
         <tbody>
           ${[1,2,3,4,5,6].map(w => {
             const wpct = getWeekProgress(w);
             return `<tr>
-              <td style="font-weight:800;color:${w===state.activeWeek?'#fff':'var(--text2)'}">W${w}</td>
-              <td style="color:var(--text3);font-size:11px">${w<=3?'P1':'P2'}</td>
-              ${PROGRAM.days.map((_,di)=>{
-                const p=getDayProgress(w,di);
-                const c = p===100?DAY_COLORS[di]:p>0?DAY_COLORS[di]+'88':'var(--text4)';
-                return `<td style="color:${c};font-weight:${p===100?800:400}">${p===100?'✓':p>0?p+'%':'—'}</td>`;
+              <td style="font-weight:800;color:${w === state.activeWeek ? '#fff' : 'var(--text2)'}">W${w}</td>
+              <td style="color:var(--text3);font-size:11px">${w <= 3 ? 'P1' : 'P2'}</td>
+              ${PROGRAM.days.map((_, di) => {
+                const p = getDayProgress(w, di);
+                const c = p === 100 ? DAY_COLORS[di] : p > 0 ? DAY_COLORS[di] + '88' : 'var(--text4)';
+                return `<td style="color:${c};font-weight:${p === 100 ? 800 : 400}">${p === 100 ? '✓' : p > 0 ? p + '%' : '—'}</td>`;
               }).join('')}
-              <td style="font-weight:800;color:${wpct>0?'#fff':'var(--text4)'}">${wpct>0?wpct+'%':'—'}</td>
+              <td style="font-weight:800;color:${wpct > 0 ? '#fff' : 'var(--text4)'}">${wpct > 0 ? wpct + '%' : '—'}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -931,12 +1030,11 @@ function renderOverview() {
     </div>
   </div>`;
 
-  // PRs
-  if(prs.length > 0) {
+  if (prs.length > 0) {
     html += `<div>
       <div class="section-label" style="color:var(--text3)">PERSONAL RECORDS</div>
       <div class="pr-list">
-        ${prs.slice(0,15).map(pr=>`
+        ${prs.slice(0,15).map(pr => `
           <div class="pr-row">
             <div>
               <div class="pr-exercise">${pr.name}</div>
@@ -955,28 +1053,47 @@ function renderOverview() {
   return html;
 }
 
-function renderModal() { return ''; }
+function renderModal() {
+  return '';
+}
 
 // ═══════════════════════════════════════════════════════
 // EVENT BINDING
 // ═══════════════════════════════════════════════════════
 function bindEvents() {
-  // Scroll the active day tab into view after render
+  const dayTabs = document.querySelector('.day-tabs');
+  if (dayTabs) {
+    dayTabs.scrollLeft = state.mobileDayTabsScrollLeft;
+
+    dayTabs.addEventListener('scroll', () => {
+      state.mobileDayTabsScrollLeft = dayTabs.scrollLeft;
+    }, { passive: true });
+  }
+
   const activeTab = document.querySelector('.day-tab.active');
   if (activeTab) {
-    activeTab.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+    activeTab.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest'
+    });
   }
 }
 
 function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
 }
 
 // ═══════════════════════════════════════════════════════
 // ACTIONS (global, called from inline handlers)
 // ═══════════════════════════════════════════════════════
 function setActiveWeek(w) {
-  state.activeWeek = w; state.activeTab = 'workout';
+  state.activeWeek = w;
+  state.activeTab = 'workout';
   render();
 }
 
@@ -990,28 +1107,32 @@ function saveEdit(ek, editKey) {
   const name = document.getElementById(`edit-name-${ek}`)?.value?.trim();
   const sets = parseInt(document.getElementById(`edit-sets-${ek}`)?.value);
   const reps = document.getElementById(`edit-reps-${ek}`)?.value?.trim();
+
   if (name && sets && reps) {
-    state.sessionEdits[editKey] = {name, sets, reps};
+    state.sessionEdits[editKey] = { name, sets, reps };
     state.openEdit = null;
-    save(); render();
+    save();
+    render();
   }
 }
 
 function clearEdit(editKey) {
   delete state.sessionEdits[editKey];
   state.openEdit = null;
-  save(); render();
+  save();
+  render();
 }
 
 function markDayComplete(w, di) {
-  state.manualComplete[manualKey(w,di)] = true;
+  state.manualComplete[manualKey(w, di)] = true;
   save();
-  // Auto-advance to next incomplete day
+
   const nextDay = findNextIncompleteDay(w, di);
   if (nextDay) {
     state.activeWeek = nextDay.week;
     state.activeDay = nextDay.day;
   }
+
   render();
 }
 
@@ -1026,35 +1147,43 @@ function findNextIncompleteDay(currentWeek, currentDay) {
 }
 
 function unmarkDayComplete(w, di) {
-  delete state.manualComplete[manualKey(w,di)];
-  save(); render();
+  delete state.manualComplete[manualKey(w, di)];
+  save();
+  render();
 }
 
 function setActiveDay(week, dayIdx) {
-  state.activeWeek = week; state.activeDay = dayIdx; state.activeTab='workout';
+  state.activeWeek = week;
+  state.activeDay = dayIdx;
+  state.activeTab = 'workout';
   render();
 }
-function setTab(tab) { state.activeTab=tab; render(); }
-function toggleWeekCollapse(w) { state.sidebarCollapsed[w]=!state.sidebarCollapsed[w]; render(); }
+
+function setTab(tab) {
+  state.activeTab = tab;
+  render();
+}
+
+function toggleWeekCollapse(w) {
+  state.sidebarCollapsed[w] = !state.sidebarCollapsed[w];
+  render();
+}
 
 function toggleSet(sk, color) {
   state.checked[sk] = !state.checked[sk];
-  if(state.checked[sk]) startTimer(90);
-  save(); render();
+  if (state.checked[sk]) startTimer(90);
+  save();
+  render();
 }
 
 function setWeight(k, w, di, si, ei, val) {
   state.weights[k] = val;
   save();
-  // update PR badge without full re-render
-  const prBadge = document.querySelectorAll('.pr-badge');
-  // just re-render exercises area
-  const pr = isPR(parseInt(w),parseInt(di),parseInt(si),parseInt(ei));
-  // lightweight: just save, full re-render on blur handled by onchange
+  const pr = isPR(parseInt(w), parseInt(di), parseInt(si), parseInt(ei));
 }
 
 function toggleNote(nk) {
-  state.openNote = state.openNote===nk ? null : nk;
+  state.openNote = state.openNote === nk ? null : nk;
   render();
 }
 
@@ -1065,7 +1194,7 @@ function setNote(nk, val) {
 
 function handleImport(evt) {
   const file = evt.target.files[0];
-  if(!file) return;
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = e => importData(e.target.result);
   reader.readAsText(file);
@@ -1078,7 +1207,9 @@ async function signInWithGoogle() {
   try {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
-  } catch(e) { console.error('Sign in error:', e); }
+  } catch(e) {
+    console.error('Sign in error:', e);
+  }
 }
 
 async function signOutUser() {
@@ -1123,9 +1254,13 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)"><div style="font-size:12px;color:var(--text3);letter-spacing:.2em">LOADING...</div></div>`;
     await loadFromFirebase();
-    // Start on next incomplete day rather than always W1D1
+
     const next = findNextIncompleteDay(1, -1);
-    if (next) { state.activeWeek = next.week; state.activeDay = next.day; }
+    if (next) {
+      state.activeWeek = next.week;
+      state.activeDay = next.day;
+    }
+
     render();
   } else {
     currentUser = null;
