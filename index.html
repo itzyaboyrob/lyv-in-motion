@@ -588,7 +588,6 @@ function updateTimer() {
 // ═══════════════════════════════════════════════════════
 function render() {
   const app = document.getElementById('app');
-  // Save scroll positions before re-render
   const content = document.getElementById('main-content');
   const contentScroll = content ? content.scrollTop : 0;
   const windowScroll = window.scrollY || document.documentElement.scrollTop;
@@ -606,10 +605,12 @@ function render() {
     ${renderModal()}
   `;
 
-  // Restore scroll positions after render
-  const newContent = document.getElementById('main-content');
-  if (newContent && contentScroll) newContent.scrollTop = contentScroll;
-  if (windowScroll) window.scrollTo(0, windowScroll);
+  // Restore after browser has painted
+  requestAnimationFrame(() => {
+    const newContent = document.getElementById('main-content');
+    if (newContent && contentScroll) newContent.scrollTop = contentScroll;
+    if (windowScroll) window.scrollTo(0, windowScroll);
+  });
 
   bindEvents();
   updateTimer();
