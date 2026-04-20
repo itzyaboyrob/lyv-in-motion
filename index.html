@@ -224,7 +224,7 @@ let saveTimeout = null;
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA
 // ═══════════════════════════════════════════════════════
-const DAY_COLORS = ['#FF4500','#FFB800','#E71D36','#00AAFF','#A855F7','#00C896','#4CAF50'];
+const DAY_COLORS = ['#FF4500','#FFB800','#FF8C00','#00AAFF','#A855F7','#FF69B4','#4CAF50'];
 
 // Week-specific cardio targets [W1, W2, W3, W4, W5, W6]
 const CARDIO = {
@@ -532,18 +532,21 @@ function getAllPRs() {
     PROGRAM.days.forEach((day,di) => {
       const dd = getDayData(di, w);
       dd.supersets.forEach((ss,si) => ss.exercises.forEach((ex,ei) => {
+        // Skip cardio, mobility and non-strength items
+        if(ex.sets === 1 && (ss.name.includes('CARDIO') || ss.name.includes('MOBILITY') || ss.name.includes('RIDE') || ss.name.includes('OPTIONAL ACTIVITY') || ss.name.includes('STRUCTURE'))) return;
         const k = wKey(w,di,si,ei);
         const wt = parseFloat(state.weights[k]);
         if(!isNaN(wt) && wt > 0) {
           const key = `${di}_${si}_${ei}`;
           if(!prs[key] || wt > prs[key].weight) {
-            prs[key] = { name:ex.name, weight:wt, week:w };
+            prs[key] = { name:ex.name, weight:wt, week:w, di, si, ei };
           }
         }
       }));
     });
   }
-  return Object.values(prs).sort((a,b)=>b.weight-a.weight);
+  // Sort by day then superset then exercise order (not by weight)
+  return Object.values(prs).sort((a,b) => a.di - b.di || a.si - b.si || a.ei - b.ei);
 }
 
 function isPR(week, dayIdx, si, ei) {
@@ -556,6 +559,18 @@ function isPR(week, dayIdx, si, ei) {
     if(!isNaN(pw) && pw >= wt) return false;
   }
   return true;
+}
+
+function getBestPR(dayIdx, si, ei) {
+  // Returns {weight, week} of the best logged weight across all weeks, or null
+  let best = null;
+  for(let w=1;w<=6;w++) {
+    const wt = parseFloat(state.weights[wKey(w,dayIdx,si,ei)]);
+    if(!isNaN(wt) && wt > 0) {
+      if(!best || wt > best.weight) best = { weight: wt, week: w };
+    }
+  }
+  return best;
 }
 
 
@@ -855,8 +870,12 @@ function renderWorkout() {
         </div>`;
       }
       html += `<button class="rest-btn" onclick="startTimer(90)">REST 90s</button>
-        </div>
-        ${noteOpen?`<div class="note-area"><textarea class="note-textarea" rows="2" placeholder="Notes — weight, how it felt, modifications..."
+        </div>`;
+      const bestPR = getBestPR(di,si,ei);
+      if(bestPR) {
+        html += `<div style="margin-top:6px;font-family:'Barlow',sans-serif;font-size:11px;font-style:italic;color:var(--text3)">⚡ PR: ${bestPR.weight} lbs (Week ${bestPR.week})</div>`;
+      }
+      html += `${noteOpen?`<div class="note-area"><textarea class="note-textarea" rows="2" placeholder="Notes — weight, how it felt, modifications..."
           onchange="setNote('${nk}',this.value)">${escHtml(note)}</textarea></div>`:''}
       </div>`;
     });
@@ -957,7 +976,7 @@ function renderOverview() {
     html += `<div>
       <div class="section-label" style="color:var(--text3)">PERSONAL RECORDS</div>
       <div class="pr-list">
-        ${prs.slice(0,15).map(pr=>`
+        ${prs.map(pr=>`
           <div class="pr-row">
             <div>
               <div class="pr-exercise">${pr.name}</div>
@@ -1166,7 +1185,7 @@ window.setNote = setNote;
 window.handleImport = handleImport;
 window.markDayComplete = markDayComplete;
 window.unmarkDayComplete = unmarkDayComplete;
-window.findNextIncompleteDay = findNextIncompleteDay;
+window.getBestPR = getBestPR;
 window.startTimer = startTimer;
 window.stopTimer = stopTimer;
 window.exportData = exportData;
