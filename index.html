@@ -20,10 +20,24 @@
   /* ── V3 Poseidon Theme ── */
   body.poseidon {
     --bg:#e8f4f8;--surface:#f4fafd;--surface2:#ddeef5;--border:#b8d8e8;--border2:#9cc8dc;
-    --text:#0d2d3f;--text2:#3a6a82;--text3:#8ab4c8;--text4:#c0dcea;
-    --accent:#0099bb;--accent2:#00c89a;--green:#00c89a;--blue:#0099bb;--purple:#5577cc;
+    --text:#0a2233;--text2:#1a4a6b;--text3:#5a8aaa;--text4:#b0d0e0;
+    --accent:#0077aa;--accent2:#008f6e;--green:#008f6e;--blue:#0077aa;--purple:#3a5faa;
     --scrollbar-thumb:#b8d8e8;
   }
+
+  /* Poseidon light-theme overrides for hardcoded dark values */
+  body.poseidon .header-left h1{color:var(--text)}
+  body.poseidon .day-title{color:var(--text)}
+  body.poseidon .day-item.active .day-name{color:var(--text)}
+  body.poseidon .tab.active{color:var(--text)}
+  body.poseidon .day-tab.active{color:var(--text);background:color-mix(in srgb,var(--accent) 15%,transparent)}
+  body.poseidon .mobile-nav select{color:var(--text)}
+  body.poseidon .mobile-nav select option{color:var(--text)}
+  body.poseidon .edit-input{color:var(--text);background:var(--surface)}
+  body.poseidon .modal h3{color:var(--text)}
+  body.poseidon .set-box .sl{color:var(--text3)}
+  body.poseidon .set-box .sn{color:var(--text2)}
+  body.poseidon .timer-time{color:var(--text3)}
 
   html,body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;letter-spacing:.02em;transition:background .3s,color .3s}
   ::-webkit-scrollbar{width:4px;height:4px}
