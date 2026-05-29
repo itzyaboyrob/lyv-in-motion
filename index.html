@@ -18,26 +18,40 @@
   }
 
   /* ── V3 Poseidon Theme ── */
+  /* Palette: #2e4a52 | #6a8f8a | #9dc4c0 | #ccddc8 | #f5f9e8 */
   body.poseidon {
-    --bg:#e8f4f8;--surface:#f4fafd;--surface2:#ddeef5;--border:#b8d8e8;--border2:#9cc8dc;
-    --text:#0a2233;--text2:#1a4a6b;--text3:#5a8aaa;--text4:#b0d0e0;
-    --accent:#0077aa;--accent2:#008f6e;--green:#008f6e;--blue:#0077aa;--purple:#3a5faa;
-    --scrollbar-thumb:#b8d8e8;
+    --bg:#f5f9e8;--surface:#ccddc8;--surface2:#b8d0b4;--border:#9dc4c0;--border2:#6a8f8a;
+    --text:#2e4a52;--text2:#3d6068;--text3:#6a8f8a;--text4:#9dc4c0;
+    --accent:#2e4a52;--accent2:#6a8f8a;--green:#4a7a6a;--blue:#5a8f8a;--purple:#5a7888;
+    --scrollbar-thumb:#9dc4c0;
   }
 
   /* Poseidon light-theme overrides for hardcoded dark values */
   body.poseidon .header-left h1{color:var(--text)}
   body.poseidon .day-title{color:var(--text)}
   body.poseidon .day-item.active .day-name{color:var(--text)}
-  body.poseidon .tab.active{color:var(--text)}
-  body.poseidon .day-tab.active{color:var(--text);background:color-mix(in srgb,var(--accent) 15%,transparent)}
-  body.poseidon .mobile-nav select{color:var(--text)}
-  body.poseidon .mobile-nav select option{color:var(--text)}
-  body.poseidon .edit-input{color:var(--text);background:var(--surface)}
+  body.poseidon .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  body.poseidon .day-tab.active{color:var(--text);border-color:var(--accent);background:rgba(46,74,82,0.12)}
+  body.poseidon .day-tab.done{background:var(--border2);border-color:var(--border2);color:#f5f9e8}
+  body.poseidon .mobile-nav select{color:var(--text);background:var(--surface);border-color:var(--border)}
+  body.poseidon .mobile-nav select option{color:var(--text);background:var(--surface)}
+  body.poseidon .edit-input{color:var(--text);background:var(--bg)}
   body.poseidon .modal h3{color:var(--text)}
   body.poseidon .set-box .sl{color:var(--text3)}
-  body.poseidon .set-box .sn{color:var(--text2)}
-  body.poseidon .timer-time{color:var(--text3)}
+  body.poseidon .set-box .sn{color:var(--text)}
+  body.poseidon .set-box:hover{border-color:var(--accent)}
+  body.poseidon .timer-time{color:var(--text4)}
+  body.poseidon .hdr-btn{color:var(--text2);border-color:var(--border2)}
+  body.poseidon .hdr-btn:hover{color:var(--text);border-color:var(--accent)}
+  body.poseidon .hdr-btn.primary{background:var(--accent);color:#f5f9e8;border-color:var(--accent)}
+  body.poseidon .note-btn{background:var(--bg);border-color:var(--border);color:var(--text3)}
+  body.poseidon .rest-btn{background:var(--bg);border-color:var(--border);color:var(--text3)}
+  body.poseidon .tbtn{background:var(--bg);border-color:var(--border);color:var(--text3)}
+  body.poseidon .weight-input{background:var(--bg);border-color:var(--border);color:var(--text)}
+  body.poseidon .note-textarea{background:var(--bg);border-color:var(--border);color:var(--text)}
+  body.poseidon .prog-select{background:var(--surface);border-color:var(--border2);color:var(--text)}
+  body.poseidon .week-label{color:var(--text3)}
+  body.poseidon .complete-banner h3{letter-spacing:.1em}
 
   html,body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;letter-spacing:.02em;transition:background .3s,color .3s}
   ::-webkit-scrollbar{width:4px;height:4px}
@@ -86,8 +100,8 @@
   .heatmap-cell:hover{border-color:#999}
   .heatmap-cell.done{border-color:transparent}
   .heatmap-cell .cell-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.02em}
-  body.poseidon .heatmap-cell{background:#ddeef5;border-color:#b8d8e8}
-  body.poseidon .heatmap-cell:hover{border-color:#0099bb}
+  body.poseidon .heatmap-cell{background:var(--surface);border-color:var(--border)}
+  body.poseidon .heatmap-cell:hover{border-color:var(--accent)}
 
   /* ── content area ── */
   .day-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
@@ -124,7 +138,7 @@
   .weight-input:focus{border-color:var(--accent)}
   .pr-badge{font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 6px;background:#FFB80022;color:#FFB800;border:1px solid #FFB80044;display:none}
   .pr-badge.show{display:inline-block}
-  body.poseidon .pr-badge{background:#00E5C022;color:#00E5C0;border:1px solid #00E5C044}
+  body.poseidon .pr-badge{background:rgba(46,74,82,0.12);color:var(--accent);border:1px solid rgba(46,74,82,0.3)}
   .v2pr-ghost{font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 6px;background:var(--border);color:var(--text3);border:1px solid var(--border2);font-family:'Barlow',sans-serif}
   .note-btn{cursor:pointer;background:var(--bg);border:1px solid var(--border2);color:var(--text3);padding:4px 8px;font-family:inherit;font-size:10px;letter-spacing:.08em;transition:all .12s}
   .note-btn:hover{border-color:var(--accent);color:var(--text2)}
@@ -502,7 +516,7 @@ const PROGRAM_V2 = {
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA — V3 (POSEIDON)
 // ═══════════════════════════════════════════════════════
-const DAY_COLORS_V3 = ['#00C8E8','#00E5C0','#7B8FF7','#00AAFF','#00D4B0','#5BC8FF','#2EE8A0'];
+const DAY_COLORS_V3 = ['#2e4a52','#6a8f8a','#4a7a70','#3d6068','#5a7888','#7a9f98','#4a6858'];
 
 // Week-specific cardio [W1..W6]
 const CARDIO_V3 = {
@@ -1220,13 +1234,13 @@ function renderSidebar() {
       const pct = getDayProgress(w,d);
       const color = colors[d];
       const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : activeProgram==='v3' ? '#ddeef5' : '#ffffff';
+      const bg = pct===100 ? color : activeProgram==='v3' ? '#ccddc8' : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
         : pct===100
           ? `1px solid ${color}`
-          : activeProgram==='v3' ? '1px solid #b8d8e8' : '1px solid #cccccc';
-      const textColor = pct===100 ? (activeProgram==='v3'?'#fff':'#000') : activeCell ? 'var(--accent)' : activeProgram==='v3'?'var(--text2)':'#222';
+          : activeProgram==='v3' ? '1px solid #9dc4c0' : '1px solid #cccccc';
+      const textColor = pct===100 ? (activeProgram==='v3'?'#fff':'#000') : activeCell ? 'var(--accent)' : activeProgram==='v3'?'#2e4a52':'#222';
       const fontWeight = activeCell ? '900' : '700';
       cells += `<div class="heatmap-cell${pct===100?' done':''}"
         style="background:${bg};border:${border}"
