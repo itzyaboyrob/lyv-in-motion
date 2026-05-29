@@ -20,9 +20,9 @@
   /* ── V3 Poseidon Theme ── */
   /* Palette: #2e4a52 | #6a8f8a | #9dc4c0 | #ccddc8 | #f5f9e8 */
   body.poseidon {
-    --bg:#e8f2f4;--surface:#d0e8ec;--surface2:#b8d8de;--border:#9dc4c0;--border2:#6a8f8a;
-    --text:#1e3a44;--text2:#2e4a52;--text3:#6a8f8a;--text4:#9dc4c0;
-    --accent:#2e4a52;--accent2:#9dc4c0;--green:#4a8a7a;--blue:#2e4a52;--purple:#4a6878;
+    --bg:#f5f9e8;--surface:#dceef2;--surface2:#c4dde2;--border:#9dc4c0;--border2:#6a8f8a;
+    --text:#1a3340;--text2:#2e4a52;--text3:#5a8088;--text4:#8ab8b4;
+    --accent:#1a3340;--accent2:#9dc4c0;--green:#4a8a7a;--blue:#1a3340;--purple:#3a5868;
     --scrollbar-thumb:#9dc4c0;
   }
 
@@ -40,7 +40,7 @@
   body.poseidon .set-box .sl{color:var(--text3)}
   body.poseidon .set-box .sn{color:var(--text)}
   body.poseidon .set-box:hover{border-color:var(--accent)}
-  body.poseidon .timer-time{color:var(--text4)}
+  body.poseidon .timer-time{color:var(--text2)}
   body.poseidon .hdr-btn{color:var(--text2);border-color:var(--border2)}
   body.poseidon .hdr-btn:hover{color:var(--text);border-color:var(--accent)}
   body.poseidon .hdr-btn.primary{background:var(--accent);color:#f5f9e8;border-color:var(--accent)}
@@ -1228,7 +1228,7 @@ function renderSidebar() {
       const pct = getDayProgress(w,d);
       const color = colors[d];
       const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : activeProgram==='v3' ? '#d0e8ec' : '#ffffff';
+      const bg = pct===100 ? color : activeProgram==='v3' ? '#dceef2' : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
         : pct===100
@@ -1314,7 +1314,7 @@ function renderWorkout() {
     </div>
     <div class="week-badge">
       <div class="wk">COMPLETE</div>
-      <div class="pct" style="color:${pct===100?dd.color:'#fff'}">${pct}%</div>
+      <div class="pct" style="color:${pct===100?dd.color:'var(--text)'}">${pct}%</div>
     </div>
   </div>
   <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%;background:${dd.color}"></div></div>
@@ -1487,7 +1487,7 @@ function renderOverview() {
             }).join('');
             const weekDone = getWeekProgress(w);
             return `<tr>
-              <td style="font-weight:800;color:${w===state.activeWeek?'#fff':'var(--text2)'}">W${w}</td>
+              <td style="font-weight:800;color:${w===state.activeWeek?'var(--accent)':'var(--text2)'}">W${w}</td>
               <td style="color:var(--text3);font-size:10px">${phaseLabel}</td>
               ${days}
               <td style="font-weight:800;color:var(--accent)">${weekDone}/7</td>
