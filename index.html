@@ -26,31 +26,53 @@
     --scrollbar-thumb:#9dc4c0;
   }
 
-  /* Poseidon light-theme overrides for hardcoded dark values */
-  body.poseidon .header-left h1{color:var(--text)}
-  body.poseidon .day-title{color:var(--text)}
-  body.poseidon .day-item.active .day-name{color:var(--text)}
-  body.poseidon .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-  body.poseidon .day-tab.active{color:var(--text);border-color:var(--accent);background:rgba(46,74,82,0.12)}
-  body.poseidon .day-tab.done{background:var(--border2);border-color:var(--border2);color:#f5f9e8}
-  body.poseidon .mobile-nav select{color:var(--text);background:var(--surface);border-color:var(--border)}
-  body.poseidon .mobile-nav select option{color:var(--text);background:var(--surface)}
-  body.poseidon .edit-input{color:var(--text);background:var(--bg)}
-  body.poseidon .modal h3{color:var(--text)}
-  body.poseidon .set-box .sl{color:var(--text3)}
-  body.poseidon .set-box .sn{color:var(--text)}
-  body.poseidon .set-box:hover{border-color:var(--accent)}
-  body.poseidon .timer-time{color:var(--text2)}
-  body.poseidon .hdr-btn{color:var(--text2);border-color:var(--border2)}
-  body.poseidon .hdr-btn:hover{color:var(--text);border-color:var(--accent)}
-  body.poseidon .hdr-btn.primary{background:var(--accent);color:#f5f9e8;border-color:var(--accent)}
-  body.poseidon .note-btn{background:var(--bg);border-color:var(--border);color:var(--text3)}
-  body.poseidon .rest-btn{background:var(--bg);border-color:var(--border);color:var(--text3)}
-  body.poseidon .tbtn{background:var(--bg);border-color:var(--border);color:var(--text3)}
-  body.poseidon .weight-input{background:var(--bg);border-color:var(--border);color:var(--text)}
-  body.poseidon .note-textarea{background:var(--bg);border-color:var(--border);color:var(--text)}
-  body.poseidon .prog-select{background:var(--surface);border-color:var(--border2);color:var(--text)}
-  body.poseidon .week-label{color:var(--text3)}
+  /* Poseidon overrides */
+  /* Dark navy header — anchors the page */
+  body.poseidon .header{background:#1a3340;border-bottom-color:#0f2028}
+  body.poseidon .header-left .sub{color:#6a9aaa}
+  body.poseidon .header-left h1{color:#f5f9e8}
+  body.poseidon .hdr-btn{color:#9dc4c0;border-color:#2e4a52}
+  body.poseidon .hdr-btn:hover{color:#f5f9e8;border-color:#9dc4c0}
+  body.poseidon .hdr-btn.primary{background:#9dc4c0;color:#1a3340;border-color:#9dc4c0}
+  body.poseidon .prog-select{background:#2e4a52;border-color:#3a5868;color:#f5f9e8}
+  body.poseidon .prog-select option{background:#1a3340;color:#f5f9e8}
+  body.poseidon .timer-time{color:#9dc4c0}
+  body.poseidon .tbtn{background:#2e4a52;border-color:#3a5868;color:#9dc4c0}
+  body.poseidon .tbtn:hover{color:#f5f9e8;border-color:#9dc4c0}
+  /* Mobile nav — dark to match header */
+  body.poseidon .mobile-timer{background:#1a3340;border-bottom-color:#0f2028}
+  body.poseidon .mobile-nav{background:#1a3340;border-bottom-color:#0f2028}
+  body.poseidon .mobile-nav select{color:#f5f9e8;background:#2e4a52;border-color:#3a5868}
+  body.poseidon .mobile-nav select option{color:#f5f9e8;background:#1a3340}
+  /* Sidebar — light blue, distinct from bg */
+  body.poseidon .sidebar{background:#e8f4f6;border-right-color:#9dc4c0}
+  body.poseidon .week-header:hover{background:#dceef2}
+  body.poseidon .day-item.active{background:#dceef2;border-left-color:#2e4a52}
+  body.poseidon .day-item.active .day-name{color:#1a3340}
+  body.poseidon .week-label{color:#2e4a52}
+  /* Day tabs — lighter borders, softer */
+  body.poseidon .day-tab{border-color:#9dc4c0;color:#2e4a52;background:#e8f4f6}
+  body.poseidon .day-tab.active{color:#1a3340;border-color:#1a3340;border-width:2px;background:#dceef2}
+  body.poseidon .day-tab.done{background:#6a8f8a;border-color:#6a8f8a;color:#f5f9e8}
+  /* Content area */
+  body.poseidon .day-title{color:#1a3340}
+  body.poseidon .tab-row{border-bottom-color:#9dc4c0}
+  body.poseidon .tab.active{color:#1a3340;border-bottom-color:#1a3340}
+  /* Cards — white so they lift off the bg */
+  body.poseidon .exercise-card{background:#ffffff;border-color:#c8e0e4}
+  body.poseidon .warmup-box{background:#ffffff;border-color:#c8e0e4}
+  /* Mark complete button — teal, not heavy navy */
+  body.poseidon .hdr-btn.primary{background:#2e4a52;color:#f5f9e8;border-color:#2e4a52}
+  /* Inputs */
+  body.poseidon .weight-input{background:#f5f9e8;border-color:#9dc4c0;color:#1a3340}
+  body.poseidon .note-textarea{background:#f5f9e8;border-color:#9dc4c0;color:#1a3340}
+  body.poseidon .note-btn{background:#f5f9e8;border-color:#9dc4c0;color:#5a8088}
+  body.poseidon .rest-btn{background:#f5f9e8;border-color:#9dc4c0;color:#5a8088}
+  body.poseidon .edit-input{color:#1a3340;background:#f5f9e8;border-color:#9dc4c0}
+  body.poseidon .set-box .sl{color:#9dc4c0}
+  body.poseidon .set-box .sn{color:#2e4a52}
+  body.poseidon .set-box:hover{border-color:#2e4a52}
+  body.poseidon .modal h3{color:#1a3340}
   body.poseidon .complete-banner h3{letter-spacing:.1em}
 
   html,body{background:var(--bg);color:var(--text);font-family:'Barlow Condensed',sans-serif;min-height:100vh;letter-spacing:.02em;transition:background .3s,color .3s}
