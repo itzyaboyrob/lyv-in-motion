@@ -316,13 +316,15 @@ let activeProgram = localStorage.getItem('lym_active_program') || 'v2';
 function setProgram(prog) {
   activeProgram = prog;
   localStorage.setItem('lym_active_program', prog);
-  // Apply theme
+  // Cancel any pending save so stale data doesn't write to wrong program
+  clearTimeout(saveTimeout);
+  // Apply theme immediately
   if (prog === 'v3') {
     document.body.classList.add('poseidon');
   } else {
     document.body.classList.remove('poseidon');
   }
-  // Reset nav state, load data, re-render
+  // Clear state immediately so old data never renders under new theme
   state.activeWeek = 1;
   state.activeDay = 0;
   state.activeTab = 'workout';
@@ -333,12 +335,16 @@ function setProgram(prog) {
   state.sessionEdits = {};
   state.openNote = null;
   state.openEdit = null;
-  loadFromFirebase().then(() => {
+  // Show loading while Firebase fetches
+  document.getElementById('app').innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)"><div style="font-size:12px;color:var(--text3);letter-spacing:.2em">LOADING...</div></div>';
+  loadFromFirebase().then(async () => {
+    if (prog === 'v3') await loadV2PRs();
     const next = findLatestCompletedDay();
     if (next) { state.activeWeek = next.week; state.activeDay = next.day; }
     render();
   });
 }
+
 
 // Apply theme on load
 if (activeProgram === 'v3') document.body.classList.add('poseidon');
