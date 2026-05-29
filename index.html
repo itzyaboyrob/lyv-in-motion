@@ -20,9 +20,9 @@
   /* ── V3 Poseidon Theme ── */
   /* Palette: #2e4a52 | #6a8f8a | #9dc4c0 | #ccddc8 | #f5f9e8 */
   body.poseidon {
-    --bg:#f5f9e8;--surface:#ccddc8;--surface2:#b8d0b4;--border:#9dc4c0;--border2:#6a8f8a;
-    --text:#2e4a52;--text2:#3d6068;--text3:#6a8f8a;--text4:#9dc4c0;
-    --accent:#2e4a52;--accent2:#6a8f8a;--green:#4a7a6a;--blue:#5a8f8a;--purple:#5a7888;
+    --bg:#e8f2f4;--surface:#d0e8ec;--surface2:#b8d8de;--border:#9dc4c0;--border2:#6a8f8a;
+    --text:#1e3a44;--text2:#2e4a52;--text3:#6a8f8a;--text4:#9dc4c0;
+    --accent:#2e4a52;--accent2:#9dc4c0;--green:#4a8a7a;--blue:#2e4a52;--purple:#4a6878;
     --scrollbar-thumb:#9dc4c0;
   }
 
@@ -516,7 +516,7 @@ const PROGRAM_V2 = {
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA — V3 (POSEIDON)
 // ═══════════════════════════════════════════════════════
-const DAY_COLORS_V3 = ['#2e4a52','#6a8f8a','#4a7a70','#3d6068','#5a7888','#7a9f98','#4a6858'];
+const DAY_COLORS_V3 = ['#2e4a52','#9dc4c0','#4a7888','#3d6878','#6a8f8a','#5a8898','#2e5a68'];
 
 // Week-specific cardio [W1..W6]
 const CARDIO_V3 = {
@@ -1173,13 +1173,7 @@ function renderMobileNav() {
     </div>`;
   }).join('');
   return `<div class="mobile-nav">
-    <div style="display:flex;gap:6px;align-items:center">
-      <select onchange="setActiveWeek(parseInt(this.value))" style="flex:1">${weekOptions}</select>
-      <select class="prog-select" onchange="setProgram(this.value)">
-        <option value="v2" ${activeProgram==='v2'?'selected':''}>OG</option>
-        <option value="v3" ${activeProgram==='v3'?'selected':''}>POSEIDON</option>
-      </select>
-    </div>
+    <select onchange="setActiveWeek(parseInt(this.value))">${weekOptions}</select>
     <div class="day-tabs">${dayTabs}</div>
   </div>`;
 }
@@ -1196,8 +1190,8 @@ function renderHeader() {
       ${renderTimer()}
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <select class="prog-select" onchange="setProgram(this.value)">
-          <option value="v2" ${activeProgram==='v2'?'selected':''}>OG</option>
-          <option value="v3" ${activeProgram==='v3'?'selected':''}>POSEIDON</option>
+          <option value="v2" ${activeProgram==='v2'?'selected':''}>PROGRAM: OG</option>
+          <option value="v3" ${activeProgram==='v3'?'selected':''}>PROGRAM: POSEIDON</option>
         </select>
         <div style="display:flex;gap:6px;align-items:center">
           ${firstName ? `<div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:.1em">${firstName.toUpperCase()}</div>` : ''}
@@ -1234,7 +1228,7 @@ function renderSidebar() {
       const pct = getDayProgress(w,d);
       const color = colors[d];
       const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : activeProgram==='v3' ? '#ccddc8' : '#ffffff';
+      const bg = pct===100 ? color : activeProgram==='v3' ? '#d0e8ec' : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
         : pct===100
