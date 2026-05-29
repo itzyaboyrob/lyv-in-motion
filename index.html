@@ -1347,6 +1347,8 @@ function renderWorkout() {
       const currentWeight = state.weights[wk]||'';
       const prBadge = isPR(w,di,ex.name);
       const v2pr = getV2PR(ex.name);
+      const bestPoseidonWeight = (() => { let b = null; for (let pw=1;pw<=6;pw++){const wt=parseFloat(state.weights[wKey(pw,di,ex.name)]);if(!isNaN(wt)&&wt>0&&(!b||wt>b))b=wt;} return b; })();
+      const showV2Ghost = v2pr && (!bestPoseidonWeight || bestPoseidonWeight <= v2pr);
 
       html += `<div class="exercise-card">
         <div class="exercise-top">
@@ -1355,7 +1357,7 @@ function renderWorkout() {
             <div class="exercise-meta">${displaySets} sets · ${displayReps}</div>
           </div>
           <div class="exercise-controls">
-            ${v2pr ? `<div class="v2pr-ghost">P1: ${v2pr} lbs</div>` : ''}
+            ${showV2Ghost ? `<div class="v2pr-ghost">P1 PR: ${v2pr} lbs</div>` : ''}
             <span class="pr-badge${prBadge?' show':''}">⚡ PR</span>
             <input class="weight-input" type="number" placeholder="lbs" value="${currentWeight}"
               onchange="setWeight('${wk}',${w},${di},'${ex.name.replace(/'/g,"\\'")}',this.value)"
