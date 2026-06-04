@@ -547,29 +547,36 @@ const PROGRAM_V2 = {
 const DAY_COLORS_V3 = ['#2e4a52','#9dc4c0','#4a7888','#3d6878','#6a8f8a','#5a8898','#2e5a68'];
 
 // Week-specific cardio [W1..W6]
+// W1=Bike Priority, W2=Run Priority, W3=Bike, W4=Run, W5=Bike, W6=Run
 const CARDIO_V3 = {
-  easyRun:   ['20–25 min','25 min','25 min','30 min','30 min','30–35 min'],
-  easyBike:  ['35–40 min','40–45 min','45 min','50 min','50 min','55 min'],
-  modBike:   ['45 min','50 min','55 min','60 min','65 min','70 min'],
-  longRun:   ['28–30 min','30–32 min','32–34 min','35 min','38 min','40–42 min'],
-  longBike:  ['85–90 min','95 min','100 min','110 min','120 min','130–135 min'],
-  cond:      [
-    'Conditioning Circuit — 2–3 rounds',
-    'Conditioning Circuit — 2–3 rounds',
-    'Tempo Conditioning — 3 rounds',
+  easyRun:    ['20–25 min','25 min','25 min','30 min','30 min','30–35 min'],
+  optBike:    ['20–30 min easy only','20–30 min if recovered','20–30 min if recovered','20–30 min if recovered','20–30 min if recovered','20–30 min if recovered'],
+  modBike:    ['30–40 min · STRICT Zone 2','35–45 min · STRICT Zone 2','35–45 min · STRICT Zone 2','40–45 min · STRICT Zone 2','40–45 min · STRICT Zone 2','40–45 min · STRICT Zone 2'],
+  // Day 6 cardio alternates: bike weeks = maintenance run, run weeks = long run
+  day6BikeWk: ['25–28 min easy','—','28–30 min easy','—','30–32 min easy','—'],
+  day6RunWk:  ['—','30–32 min LONG RUN','—','35 min LONG RUN','—','35–38 min LONG RUN'],
+  // Day 7 cardio alternates: bike weeks = long bike, run weeks = maintenance bike
+  day7BikeWk: ['85–90 min easy endurance','—','100 min easy endurance','—','110–120 min easy endurance','—'],
+  day7RunWk:  ['—','75–80 min easy only','—','80–90 min easy only','—','85–95 min easy only'],
+  cond:       [
+    'Conditioning Circuit — 2 rounds ONLY',
+    'Conditioning Circuit — 2 rounds ONLY',
+    'Tempo Run — 18–20 min',
     'Intervals — 1 min hard / 2 min easy × 6–8',
     'Intervals — 90 sec hard / 2 min easy × 6',
-    'Tempo + Surges — 20–25 min total',
+    'Tempo + Surges — 20–25 min · surge every 5 min',
   ],
 };
 
 // Helper tokens mapped to cardio keys
 const CARDIO_V3_MAP = {
   '__EASY_RUN__': 'easyRun',
-  '__EASY_BIKE__': 'easyBike',
+  '__OPT_BIKE__': 'optBike',
   '__MOD_BIKE__': 'modBike',
-  '__LONG_RUN__': 'longRun',
-  '__LONG_BIKE__': 'longBike',
+  '__DAY6_BIKE_WK__': 'day6BikeWk',
+  '__DAY6_RUN_WK__': 'day6RunWk',
+  '__DAY7_BIKE_WK__': 'day7BikeWk',
+  '__DAY7_RUN_WK__': 'day7RunWk',
   '__COND__': 'cond',
 };
 
@@ -636,9 +643,10 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 1', exercises:[{name:'Bent Over Row',sets:4,reps:'8'},{name:'Rear Delt Fly',sets:3,reps:'15'}] },
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'12'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'BICEPS', exercises:[{name:'DB Curl',sets:3,reps:'10'},{name:'Hammer Curl',sets:3,reps:'10'}] },
-            { name:'CARDIO', exercises:[{name:'Easy Bike',sets:1,reps:'__EASY_BIKE__'}] },
+            { name:'OPTIONAL CARDIO', exercises:[{name:'Easy Bike (optional)',sets:1,reps:'__OPT_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Hanging Knee Raises',sets:3,reps:'12'}] },
           ],
+          notes: ['Easy bike only if energy and recovery feel good — skip it if not'],
           stretch:"Lat Stretch 30s · Child's Pose w/ Reach 45s · Thoracic Rotation 10/side"
         },
         B: {
@@ -647,9 +655,10 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 1', exercises:[{name:'Bent Over Row',sets:4,reps:'8'},{name:'Rear Delt Fly',sets:3,reps:'15'}] },
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'12'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'BICEPS', exercises:[{name:'DB Curl',sets:3,reps:'10'},{name:'DB Curl Drop Set',sets:1,reps:'1 round'},{name:'Hammer Curl',sets:3,reps:'10'}] },
-            { name:'CARDIO', exercises:[{name:'Easy Bike',sets:1,reps:'__EASY_BIKE__'}] },
+            { name:'OPTIONAL CARDIO', exercises:[{name:'Easy Bike (optional)',sets:1,reps:'__OPT_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Hanging Knee Raises',sets:3,reps:'12'}] },
           ],
+          notes: ['Easy bike only if energy and recovery feel good — skip it if not'],
           stretch:"Lat Stretch 30s · Child's Pose w/ Reach 45s · Thoracic Rotation 10/side"
         },
         C: {
@@ -658,9 +667,10 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 1', exercises:[{name:'Bent Over Row',sets:4,reps:'6–8'},{name:'Rear Delt Fly',sets:3,reps:'15'}] },
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'12–15'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'BICEPS', exercises:[{name:'DB Curl',sets:3,reps:'10'},{name:'DB Curl Drop Set',sets:1,reps:'1 round'},{name:'Hammer Curl',sets:3,reps:'10'},{name:'Hammer Curl Drop Set (optional)',sets:1,reps:'1 round if recovered'}] },
-            { name:'CARDIO', exercises:[{name:'Easy Bike',sets:1,reps:'__EASY_BIKE__'}] },
+            { name:'OPTIONAL CARDIO', exercises:[{name:'Easy Bike (optional)',sets:1,reps:'__OPT_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Hanging Knee Raises',sets:3,reps:'12'}] },
           ],
+          notes: ['Easy bike only if energy and recovery feel good — skip it if not'],
           stretch:"Lat Stretch 30s · Child's Pose w/ Reach 45s · Thoracic Rotation 10/side"
         }
       }
@@ -677,7 +687,7 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Step Ups',sets:3,reps:'10/leg'},{name:'Single-Leg RDL',sets:3,reps:'10/leg'}] },
             { name:'GLUTE FINISHER', exercises:[{name:'DB Hip Thrust',sets:3,reps:'12'}] },
             { name:'CALVES', exercises:[{name:'Standing Calf Raises',sets:3,reps:'15'}] },
-            { name:'CONDITIONING CIRCUIT — 2–3 ROUNDS', exercises:[{name:'KB Swings',sets:3,reps:'15'},{name:'Battle Rope',sets:3,reps:'30 sec'},{name:'Burpees',sets:3,reps:'10'},{name:'Mountain Climbers',sets:3,reps:'20'}] },
+            { name:'CONDITIONING CIRCUIT — 2 ROUNDS (3 IF RECOVERED)', exercises:[{name:'KB Swings',sets:3,reps:'15'},{name:'Battle Rope',sets:3,reps:'30 sec'},{name:'Burpees',sets:3,reps:'10'},{name:'Mountain Climbers',sets:3,reps:'20'}] },
             { name:'CORE', exercises:[{name:'Deadbugs',sets:3,reps:'12'}] },
           ],
           stretch:"Hip Flexor Stretch 30s/side · Hamstring Stretch 30s/side · Deep Squat Hold 45s · Ankle Mobility Rocks 10/side"
@@ -690,7 +700,7 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Step Ups',sets:3,reps:'10/leg'},{name:'Single-Leg RDL',sets:3,reps:'10/leg'}] },
             { name:'GLUTE FINISHER', exercises:[{name:'DB Hip Thrust',sets:3,reps:'12'},{name:'DB Hip Thrust Drop Set',sets:1,reps:'1 round'}] },
             { name:'CALVES', exercises:[{name:'Standing Calf Raises',sets:3,reps:'15'}] },
-            { name:'CONDITIONING — 3 ROUNDS', exercises:[{name:'KB Swings',sets:3,reps:'15'},{name:'Battle Rope',sets:3,reps:'30 sec'},{name:'Burpees',sets:3,reps:'10'},{name:'Mountain Climbers',sets:3,reps:'20'}] },
+            { name:'CONDITIONING CIRCUIT — 2 ROUNDS ONLY', exercises:[{name:'KB Swings',sets:3,reps:'15'},{name:'Battle Rope',sets:3,reps:'30 sec'},{name:'Burpees',sets:3,reps:'10'},{name:'Mountain Climbers',sets:3,reps:'20'}] },
             { name:'CORE', exercises:[{name:'Deadbugs',sets:3,reps:'15'}] },
           ],
           stretch:"Hip Flexor Stretch 30s/side · Hamstring Stretch 30s/side · Deep Squat Hold 45s · Ankle Mobility Rocks 10/side"
@@ -704,7 +714,7 @@ const PROGRAM_V3 = {
             { name:'GLUTE FINISHER', exercises:[{name:'DB Hip Thrust',sets:3,reps:'12'},{name:'DB Hip Thrust Drop Set',sets:1,reps:'1 round'}] },
             { name:'OPTIONAL BURNOUT', exercises:[{name:'Bodyweight Squat Burnout',sets:1,reps:'1 set near fatigue — stop before form breaks'}] },
             { name:'CALVES', exercises:[{name:'Standing Calf Raises',sets:3,reps:'15–20'}] },
-            { name:'CONDITIONING — INTERVALS', exercises:[{name:'Hard Effort',sets:6,reps:'90 sec hard'},{name:'Easy Effort',sets:6,reps:'2 min easy'}] },
+            { name:'CONDITIONING — INTERVALS (2 ROUNDS, OPT 3RD IF RECOVERED)', exercises:[{name:'Hard Effort',sets:6,reps:'90 sec hard'},{name:'Easy Effort',sets:6,reps:'2 min easy'}] },
             { name:'CORE', exercises:[{name:'Deadbugs',sets:3,reps:'15'}] },
           ],
           stretch:"Hip Flexor Stretch 30s/side · Hamstring Stretch 30s/side · Deep Squat Hold 45s · Ankle Mobility Rocks 10/side"
@@ -726,7 +736,12 @@ const PROGRAM_V3 = {
             ]},
             { name:'OPTIONAL PULL-UP SUPPORT', exercises:[{name:'Dead Hang',sets:2,reps:'1–2 light sets'}] },
           ],
-          notes: ['Avoid hard lifting, HIIT, long cardio, or hard running'],
+          notes: [
+            'No hard lifting, HIIT, long cardio, or hard running',
+            'Optional cardio only if legs feel fresh, sleep is good, and energy is solid — otherwise walk or mobility only',
+            'Long run and long bike may alternate weekly emphasis if fatigue is accumulating',
+            'Moderate bike rides = strict Zone 2 only — do not let them become threshold efforts',
+          ],
           finish: null,
           stretch: null
         },
@@ -738,7 +753,12 @@ const PROGRAM_V3 = {
             ]},
             { name:'OPTIONAL PULL-UP SUPPORT', exercises:[{name:'Dead Hang',sets:2,reps:'1–2 light sets'}] },
           ],
-          notes: ['Keep it easy — avoid hard cardio'],
+          notes: [
+            'Keep it easy — avoid hard cardio',
+            'Optional cardio only if legs feel fresh, sleep is good, and energy is solid',
+            'Long run and long bike may alternate weekly emphasis if fatigue accumulates',
+            'Moderate bike = strict Zone 2 — not threshold',
+          ],
           finish: null,
           stretch: null
         },
@@ -749,7 +769,12 @@ const PROGRAM_V3 = {
               {name:'Mobility',sets:1,reps:'10–15 min'},
             ]},
           ],
-          notes: ['No hard cardio — you need the recovery'],
+          notes: [
+            'No hard cardio — you need the recovery',
+            'Optional sessions only if legs feel fresh, sleep is good, and energy is solid',
+            'Long run and long bike may alternate emphasis if fatigue is accumulating',
+            'Moderate bike = strict Zone 2 — not threshold',
+          ],
           finish: null,
           stretch: null
         }
@@ -764,7 +789,7 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 1', exercises:[{name:'DB Incline Press',sets:3,reps:'12'},{name:'Lateral Raise',sets:3,reps:'15'}] },
             { name:'SUPERSET 2', exercises:[{name:'Chest Fly',sets:3,reps:'12'},{name:'Front Raise',sets:3,reps:'12'}] },
             { name:'SUPERSET 3', exercises:[{name:'Close-Grip Pushups',sets:3,reps:'15'},{name:'Band Pushdowns',sets:3,reps:'15'}] },
-            { name:'CARDIO', exercises:[{name:'Moderate Bike',sets:1,reps:'__MOD_BIKE__'}] },
+            { name:'CARDIO', exercises:[{name:'Moderate Bike — STRICT Zone 2 only',sets:1,reps:'__MOD_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Shoulder Taps',sets:3,reps:'20'},{name:'Bicycle Crunches',sets:3,reps:'20'}] },
           ],
           stretch:"Doorway Chest Stretch 30s · Cross-Body Shoulder Stretch 30s/side · Child's Pose 45s"
@@ -774,7 +799,7 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 1', exercises:[{name:'DB Incline Press',sets:3,reps:'12'},{name:'Lateral Raise',sets:3,reps:'15'},{name:'Lateral Raise Drop Set',sets:1,reps:'1 round'}] },
             { name:'SUPERSET 2', exercises:[{name:'Chest Fly',sets:3,reps:'12'},{name:'Front Raise',sets:3,reps:'12'}] },
             { name:'SUPERSET 3', exercises:[{name:'Close-Grip Pushups',sets:3,reps:'15'},{name:'Band Pushdowns',sets:3,reps:'15'}] },
-            { name:'CARDIO', exercises:[{name:'Moderate Bike',sets:1,reps:'__MOD_BIKE__'}] },
+            { name:'CARDIO', exercises:[{name:'Moderate Bike — STRICT Zone 2 only',sets:1,reps:'__MOD_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Shoulder Taps',sets:3,reps:'20'},{name:'Bicycle Crunches',sets:3,reps:'20'}] },
           ],
           stretch:"Doorway Chest Stretch 30s · Cross-Body Shoulder Stretch 30s/side · Child's Pose 45s"
@@ -785,7 +810,7 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Chest Fly',sets:3,reps:'12'},{name:'Front Raise',sets:3,reps:'12'}] },
             { name:'SUPERSET 3', exercises:[{name:'Close-Grip Pushups',sets:3,reps:'15'},{name:'Band Pushdowns',sets:3,reps:'15'}] },
             { name:'OPTIONAL DROP SET', exercises:[{name:'Rear Delt Fly Drop Set',sets:1,reps:'optional — only if shoulders feel good'}] },
-            { name:'CARDIO', exercises:[{name:'Moderate Bike',sets:1,reps:'__MOD_BIKE__'}] },
+            { name:'CARDIO', exercises:[{name:'Moderate Bike — STRICT Zone 2 only',sets:1,reps:'__MOD_BIKE__'}] },
             { name:'CORE', exercises:[{name:'Shoulder Taps',sets:3,reps:'20'},{name:'Bicycle Crunches',sets:3,reps:'20'}] },
           ],
           stretch:"Doorway Chest Stretch 30s · Cross-Body Shoulder Stretch 30s/side · Child's Pose 45s"
@@ -793,7 +818,7 @@ const PROGRAM_V3 = {
       }
     },
     {
-      id: 6, label: 'PULL HYPERTROPHY', sub: 'Back Volume · Biceps · Long Run',
+      id: 6, label: 'PULL HYPERTROPHY', sub: 'Back Volume · Biceps · Run Focus',
       warmup: ['Easy Jog — 2 min','Band Pull Aparts — 20','Dead Hang — 20 sec'],
       phases: {
         A: {
@@ -802,8 +827,12 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'15'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'SUPERSET 3', exercises:[{name:'Hammer Curl',sets:3,reps:'12'},{name:'DB Curl',sets:3,reps:'12'}] },
             { name:'PULL-UP PROGRESSION', exercises:[{name:'Assisted Pullups',sets:3,reps:'5–6'},{name:'Top Hold',sets:1,reps:'10 sec'}] },
-            { name:'CARDIO', exercises:[{name:'Long Run',sets:1,reps:'__LONG_RUN__'}] },
+            { name:'CARDIO — BIKE WEEKS: MAINTENANCE RUN · RUN WEEKS: LONG RUN', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY6_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY6_RUN_WK__'},
+            ]},
           ],
+          notes: ['Bike priority weeks: easy maintenance run only · Run priority weeks: this is your long run'],
           stretch:"Calf Stretch 45s/side · Hamstring Stretch 45s/side · Hip Flexor Stretch 45s/side · Figure 4 Stretch 30s/side"
         },
         B: {
@@ -812,8 +841,12 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'15'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'SUPERSET 3', exercises:[{name:'Hammer Curl',sets:3,reps:'12'},{name:'DB Curl',sets:3,reps:'12'}] },
             { name:'PULL-UP PROGRESSION', exercises:[{name:'Assisted Pullups',sets:3,reps:'6'},{name:'Top Hold',sets:1,reps:'10–15 sec'}] },
-            { name:'CARDIO', exercises:[{name:'Long Run',sets:1,reps:'__LONG_RUN__'}] },
+            { name:'CARDIO — BIKE WEEKS: MAINTENANCE RUN · RUN WEEKS: LONG RUN', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY6_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY6_RUN_WK__'},
+            ]},
           ],
+          notes: ['Bike priority weeks: easy maintenance run only · Run priority weeks: this is your long run'],
           stretch:"Calf Stretch 45s/side · Hamstring Stretch 45s/side · Hip Flexor Stretch 45s/side · Figure 4 Stretch 30s/side"
         },
         C: {
@@ -822,50 +855,58 @@ const PROGRAM_V3 = {
             { name:'SUPERSET 2', exercises:[{name:'Band Pulldown',sets:3,reps:'15'},{name:'Band Face Pull',sets:3,reps:'15'}] },
             { name:'SUPERSET 3', exercises:[{name:'Hammer Curl',sets:3,reps:'12'},{name:'DB Curl',sets:3,reps:'12'}] },
             { name:'PULL-UP PROGRESSION', exercises:[{name:'Assisted Pullups',sets:3,reps:'6–8'},{name:'Top Hold',sets:1,reps:'15 sec'}] },
-            { name:'CARDIO', exercises:[{name:'Long Run',sets:1,reps:'__LONG_RUN__'}] },
+            { name:'CARDIO — BIKE WEEKS: MAINTENANCE RUN · RUN WEEKS: LONG RUN', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY6_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY6_RUN_WK__'},
+            ]},
           ],
-          notes: ['Goal: comfortable 3+ miles by Week 6'],
+          notes: ['Bike priority weeks: easy maintenance run only · Run priority weeks: this is your long run'],
           stretch:"Calf Stretch 45s/side · Hamstring Stretch 45s/side · Hip Flexor Stretch 45s/side · Figure 4 Stretch 30s/side"
         }
       }
     },
     {
-      id: 7, label: 'LONG BIKE', sub: 'Aerobic Engine · Optional Recovery',
+      id: 7, label: 'BIKE FOCUS', sub: 'Long Bike or Maintenance Bike',
       warmup: [],
       phases: {
         A: {
           supersets: [
-            { name:'CARDIO', exercises:[{name:'Long Bike',sets:1,reps:'__LONG_BIKE__'}] },
-            { name:'OPTIONAL SECOND SESSION', exercises:[
-              {name:'Walk',sets:1,reps:'20–30 min'},
-              {name:'Recovery Jog',sets:1,reps:'15–20 min'},
-              {name:'Easy Spin',sets:1,reps:'20–30 min'},
+            { name:'CARDIO — BIKE WEEKS: LONG BIKE · RUN WEEKS: MAINTENANCE BIKE', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY7_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY7_RUN_WK__'},
             ]},
           ],
-          notes: ['Easy sustainable endurance pace throughout','Only do second session if energy and legs feel good'],
+          notes: [
+            'Bike priority weeks: long endurance ride — easy sustainable pace only',
+            'Run priority weeks: maintenance bike only — easy spin, NOT a true endurance ride',
+            'Easy pace throughout — no racing, no threshold efforts',
+          ],
           stretch:"Hip Flexor Stretch 45s/side · Quad Stretch 30s/side · Hamstring Stretch 30s/side · Calf Stretch 30s/side"
         },
         B: {
           supersets: [
-            { name:'CARDIO', exercises:[{name:'Long Bike',sets:1,reps:'__LONG_BIKE__'}] },
-            { name:'OPTIONAL SECOND SESSION', exercises:[
-              {name:'Walk',sets:1,reps:'20–30 min'},
-              {name:'Recovery Jog',sets:1,reps:'15–20 min'},
+            { name:'CARDIO — BIKE WEEKS: LONG BIKE · RUN WEEKS: MAINTENANCE BIKE', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY7_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY7_RUN_WK__'},
             ]},
           ],
-          notes: ['Only if recovered'],
+          notes: [
+            'Bike priority weeks: long endurance ride — easy sustainable pace only',
+            'Run priority weeks: maintenance bike only — easy spin, NOT a true endurance ride',
+          ],
           stretch:"Hip Flexor Stretch 45s/side · Quad Stretch 30s/side · Hamstring Stretch 30s/side · Calf Stretch 30s/side"
         },
         C: {
           supersets: [
-            { name:'CARDIO', exercises:[{name:'Long Bike',sets:1,reps:'__LONG_BIKE__'}] },
-            { name:'OPTIONAL SECOND SESSION', exercises:[
-              {name:'Walk',sets:1,reps:'20–30 min'},
-              {name:'Recovery Jog',sets:1,reps:'15–20 min'},
-              {name:'Easy Spin',sets:1,reps:'20 min'},
+            { name:'CARDIO — BIKE WEEKS: LONG BIKE · RUN WEEKS: MAINTENANCE BIKE', exercises:[
+              {name:'Bike Priority Week (W1/3/5)',sets:1,reps:'__DAY7_BIKE_WK__'},
+              {name:'Run Priority Week (W2/4/6)',sets:1,reps:'__DAY7_RUN_WK__'},
             ]},
           ],
-          notes: ['Goal: comfortable 2+ hour ride by Week 6'],
+          notes: [
+            'Bike priority weeks: long endurance ride — easy sustainable pace only',
+            'Run priority weeks: maintenance bike only — easy spin, NOT a true endurance ride',
+          ],
           stretch:"Hip Flexor Stretch 45s/side · Quad Stretch 30s/side · Hamstring Stretch 30s/side · Calf Stretch 30s/side"
         }
       }
