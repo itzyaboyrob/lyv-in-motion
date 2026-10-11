@@ -282,6 +282,53 @@
   body.poseidon .heatmap-cell.done{
     box-shadow:0 0 4px var(--accent)66;
   }
+
+  /* ── V2 ARTEMIS Theme ── */
+  body.artemis {
+    --bg:#1a2415;--surface:#243320;--surface2:#2e4028;--border:#3a4a2a;--border2:#4a5a38;
+    --text:#f0e8d0;--text2:#d4c9a8;--text3:#8a9a6a;--text4:#4a5a38;
+    --accent:#c8860a;--accent2:#8B4513;--green:#6a9a2a;--blue:#5a7a3a;--purple:#7a6a3a;
+    --scrollbar-thumb:#3a4a2a;
+  }
+
+  /* Artemis overrides */
+  body.artemis .header{background:#0f1a0a;border-bottom-color:#1a2a10}
+  body.artemis .header-left .sub{color:#6a8a4a}
+  body.artemis .header-left h1{color:#f0e8d0}
+  body.artemis .hdr-btn{color:#8a9a6a;border-color:#3a4a2a}
+  body.artemis .hdr-btn:hover{color:#f0e8d0;border-color:#c8860a}
+  body.artemis .hdr-btn.primary{background:#c8860a;color:#0f1a0a;border-color:#c8860a}
+  body.artemis .prog-select{background:#243320;border-color:#4a5a38;color:#f0e8d0}
+  body.artemis .prog-select option{background:#1a2415;color:#f0e8d0}
+  body.artemis .timer-time{color:#8a9a6a}
+  body.artemis .tbtn{background:#243320;border-color:#3a4a2a;color:#8a9a6a}
+  body.artemis .tbtn:hover{color:#f0e8d0;border-color:#c8860a}
+  body.artemis .mobile-timer{background:#0f1a0a;border-bottom-color:#1a2a10}
+  body.artemis .mobile-nav{background:#0f1a0a;border-bottom-color:#1a2a10}
+  body.artemis .mobile-nav select{color:#f0e8d0;background:#243320;border-color:#3a4a2a}
+  body.artemis .mobile-nav select option{color:#f0e8d0;background:#1a2415}
+  body.artemis .day-tab{border-color:#3a4a2a;color:#8a9a6a;background:#1a2415}
+  body.artemis .day-tab.active{color:#f0e8d0;border-color:#c8860a;border-width:2px;background:rgba(200,134,10,0.12)}
+  body.artemis .day-tab.done{background:#6a9a2a;border-color:#6a9a2a;color:#0f1a0a}
+  body.artemis .day-item.active{background:#2e4028;border-left-color:#c8860a}
+  body.artemis .day-item.active .day-name{color:#f0e8d0}
+  body.artemis .day-title{color:#f0e8d0}
+  body.artemis .tab.active{color:#f0e8d0;border-bottom-color:#c8860a}
+  body.artemis .exercise-card{background:#243320;border-color:#3a4a2a}
+  body.artemis .warmup-box{background:#243320;border-color:#3a4a2a}
+  body.artemis .weight-input{background:#1a2415;border-color:#3a4a2a;color:#f0e8d0}
+  body.artemis .note-textarea{background:#1a2415;border-color:#3a4a2a;color:#f0e8d0}
+  body.artemis .note-btn{background:#1a2415;border-color:#3a4a2a;color:#8a9a6a}
+  body.artemis .rest-btn{background:#1a2415;border-color:#3a4a2a;color:#8a9a6a}
+  body.artemis .set-box .sl{color:#4a5a38}
+  body.artemis .set-box .sn{color:#4a5a38}
+  body.artemis .set-box:hover{border-color:#c8860a}
+  body.artemis .pr-badge{background:rgba(200,134,10,0.15);color:#c8860a;border:1px solid rgba(200,134,10,0.3)}
+  body.artemis .heatmap-cell{background:#243320;border-color:#3a4a2a}
+  body.artemis .heatmap-cell:hover{border-color:#c8860a}
+  body.artemis .week-header:hover{background:#2e4028}
+  body.artemis .sidebar{background:#1a2415;border-right-color:#3a4a2a}
+  body.artemis .edit-input{color:#f0e8d0;background:#1a2415;border-color:#3a4a2a}
 </style>
 </head>
 <body>
@@ -311,7 +358,13 @@ let saveTimeout = null;
 // ═══════════════════════════════════════════════════════
 // ACTIVE PROGRAM — 'v2' or 'v3'
 // ═══════════════════════════════════════════════════════
-let activeProgram = localStorage.getItem('lym_active_program') || 'v2';
+let activeProgram = localStorage.getItem('lym_active_program') || 'og';
+// Remap legacy 'v2' key (old OG) to 'og'
+if (activeProgram === 'v2' && !localStorage.getItem('lym_v2_migrated')) {
+  activeProgram = 'og';
+  localStorage.setItem('lym_active_program', 'og');
+  localStorage.setItem('lym_v2_migrated', '1');
+}
 
 function setProgram(prog) {
   activeProgram = prog;
@@ -319,11 +372,9 @@ function setProgram(prog) {
   // Cancel any pending save so stale data doesn't write to wrong program
   clearTimeout(saveTimeout);
   // Apply theme immediately
-  if (prog === 'v3') {
-    document.body.classList.add('poseidon');
-  } else {
-    document.body.classList.remove('poseidon');
-  }
+  document.body.classList.remove('poseidon','artemis');
+  if (prog === 'v3') document.body.classList.add('poseidon');
+  if (prog === 'v2') document.body.classList.add('artemis');
   // Clear state immediately so old data never renders under new theme
   state.activeWeek = 1;
   state.activeDay = 0;
@@ -348,6 +399,7 @@ function setProgram(prog) {
 
 // Apply theme on load
 if (activeProgram === 'v3') document.body.classList.add('poseidon');
+if (activeProgram === 'v2') document.body.classList.add('artemis');
 
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA — V2 (original)
@@ -914,13 +966,394 @@ const PROGRAM_V3 = {
   ]
 };
 
+
+// ═══════════════════════════════════════════════════════
+// PROGRAM DATA — ARTEMIS (V2)
+// ═══════════════════════════════════════════════════════
+const DAY_COLORS_ARTEMIS = ['#c8860a','#6a9a2a','#8B4513','#c8860a','#6a9a2a','#8B4513','#4a5a38'];
+
+// Peloton durations by week [W1..W6]
+const PELOTON_ARTEMIS = {
+  easy:      ['20 min · RPE 2–4','25 min · RPE 3–4','25 min · RPE 3–4','30 min · RPE 3–4','15 min easy · RPE 2–3','20 min easy · RPE 2–3'],
+  endurance: ['20 min · RPE 3–4','25 min · RPE 3–4','30 min · RPE 3–4','35 min · RPE 3–4 (optional tempo)','35 min · RPE 3–4','30 min · RPE 3–4'],
+};
+
+const PROGRAM_ARTEMIS = {
+  name: 'ARTEMIS',
+  sub: '6-WEEK STRENGTH & CYCLING',
+  days: [
+    // ── WEEK 1 ──
+    // Day 1 — Push A
+    {
+      id: 1, label: 'PUSH A', sub: 'Chest · Shoulders · Triceps · Core',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:2,reps:'10'},
+            {name:'Seated DB Shoulder Press',sets:2,reps:'10'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10'},
+            {name:'DB Lateral Raise',sets:2,reps:'12'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12'},
+            {name:'Dead Bug',sets:2,reps:'8/side'},
+          ]},
+        ], stretch:null },
+        W2: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:2,reps:'10–12'},
+            {name:'Seated DB Shoulder Press',sets:2,reps:'10–12'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'10/side'},
+          ]},
+        ], stretch:null },
+        W3: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:3,reps:'8–12'},
+            {name:'Seated DB Shoulder Press',sets:2,reps:'10'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12'},
+            {name:'Dead Bug',sets:2,reps:'10/side'},
+          ]},
+        ], stretch:null },
+        W4: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:3,reps:'8–12'},
+            {name:'Seated DB Shoulder Press',sets:3,reps:'8–12'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'12/side'},
+          ]},
+        ], stretch:null },
+        W5: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:3,reps:'8–12'},
+            {name:'Seated DB Shoulder Press',sets:3,reps:'8–12'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'12/side'},
+          ]},
+        ], stretch:null },
+        W6: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:3,reps:'8–12'},
+            {name:'Seated DB Shoulder Press',sets:3,reps:'8–12'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'12/side'},
+          ]},
+        ], stretch:null },
+      }
+    },
+    // Day 2 — Peloton / Pull A
+    {
+      id: 2, label: 'PELOTON / PULL A', sub: 'Cycling · Back · Biceps',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'PELOTON', exercises:[{name:'Low Impact Ride — seated only',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], notes:['Remain seated · conversational breathing · avoid heavy resistance'], stretch:null },
+        W2: { supersets: [
+          { name:'PULL A', exercises:[
+            {name:'One-Arm DB Row',sets:2,reps:'10–12/side'},
+            {name:'Assisted Pull-Up or Chest-Supported Row',sets:2,reps:'6–10'},
+            {name:'DB Reverse Fly',sets:2,reps:'12–15'},
+            {name:'Hammer Curl',sets:2,reps:'12'},
+            {name:'Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Bird Dog',sets:2,reps:'10/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride — seated only',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], notes:['Remain seated throughout'], stretch:null },
+        W3: { supersets: [
+          { name:'PULL A', exercises:[
+            {name:'One-Arm DB Row',sets:3,reps:'8–12/side'},
+            {name:'Assisted Pull-Up or Supported Row',sets:2,reps:'6–10'},
+            {name:'DB Romanian Deadlift',sets:2,reps:'10'},
+            {name:'DB Reverse Fly',sets:2,reps:'12–15'},
+            {name:'Hammer Curl',sets:2,reps:'12'},
+            {name:'Bird Dog',sets:2,reps:'10/side'},
+          ]},
+        ], notes:['Sub floor glute bridges for RDL if needed'], stretch:null },
+        W4: { supersets: [
+          { name:'PULL A', exercises:[
+            {name:'One-Arm DB Row',sets:3,reps:'8–12/side'},
+            {name:'Assisted Pull-Up or Supported Row',sets:3,reps:'6–10'},
+            {name:'DB Romanian Deadlift',sets:2,reps:'10–12'},
+            {name:'DB Reverse Fly',sets:2,reps:'12–15'},
+            {name:'Hammer Curl',sets:2,reps:'10–12'},
+            {name:'Bird Dog',sets:2,reps:'10/side'},
+          ]},
+        ], notes:['Sub floor glute bridges for RDL if needed'], stretch:null },
+        W5: { supersets: [
+          { name:'PULL A + PELOTON', exercises:[
+            {name:'One-Arm DB Row',sets:3,reps:'8–12/side'},
+            {name:'Assisted Pull-Up or Supported Row',sets:3,reps:'6–10'},
+            {name:'DB Romanian Deadlift',sets:2,reps:'10'},
+            {name:'DB Reverse Fly',sets:2,reps:'12–15'},
+            {name:'Hammer Curl',sets:2,reps:'10–12'},
+            {name:'Bird Dog',sets:2,reps:'10/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Ride',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], stretch:null },
+        W6: { supersets: [
+          { name:'PULL A + PELOTON', exercises:[
+            {name:'One-Arm DB Row',sets:3,reps:'8–12/side'},
+            {name:'Assisted Pull-Up or Supported Row',sets:3,reps:'6–10'},
+            {name:'DB Romanian Deadlift',sets:2,reps:'10–12'},
+            {name:'DB Reverse Fly',sets:2,reps:'12–15'},
+            {name:'Hammer Curl',sets:2,reps:'10–12'},
+            {name:'Bird Dog',sets:2,reps:'12/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Ride',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], stretch:null },
+      }
+    },
+    // Day 3 — Pull A / Peloton / Lower Body
+    {
+      id: 3, label: 'PULL A / PELOTON / LOWER', sub: 'Back · Biceps · Cycling',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'PULL A', exercises:[
+            {name:'One-Arm DB Row',sets:2,reps:'10/side'},
+            {name:'Assisted Pull-Up or Chest-Supported Row',sets:2,reps:'6–10'},
+            {name:'DB Reverse Fly',sets:2,reps:'12'},
+            {name:'Hammer Curl',sets:2,reps:'12'},
+            {name:'Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Bird Dog',sets:2,reps:'8/side'},
+          ]},
+        ], stretch:null },
+        W2: { supersets: [
+          { name:'PUSH A', exercises:[
+            {name:'Barbell Bench Press',sets:2,reps:'10–12'},
+            {name:'Seated DB Shoulder Press',sets:2,reps:'10–12'},
+            {name:'Incline DB Bench Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Overhead DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'10/side'},
+          ]},
+        ], stretch:null },
+        W3: { supersets: [
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride — seated only',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Low impact or easy Power Zone Endurance · remain seated'], stretch:null },
+        W4: { supersets: [
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride — seated only',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Seated aerobic riding only'], stretch:null },
+        W5: { supersets: [
+          { name:'LOWER BODY + CORE', exercises:[
+            {name:'Floor Glute Bridge',sets:3,reps:'12'},
+            {name:'Side-Lying Hip Abduction',sets:2,reps:'15/side'},
+            {name:'Seated Leg Extension',sets:2,reps:'12'},
+            {name:'Hamstring Curl',sets:2,reps:'12'},
+            {name:'Dead Bug',sets:2,reps:'12/side'},
+            {name:'Side Plank',sets:2,reps:'30 sec/side'},
+          ]},
+        ], notes:['Sub or skip leg extension/curl if equipment unavailable'], stretch:null },
+        W6: { supersets: [
+          { name:'LOWER BODY + CORE', exercises:[
+            {name:'Floor Glute Bridge',sets:3,reps:'12–15'},
+            {name:'Side-Lying Hip Abduction',sets:2,reps:'15/side'},
+            {name:'Seated Leg Extension',sets:2,reps:'12–15'},
+            {name:'Hamstring Curl',sets:2,reps:'12–15'},
+            {name:'Dead Bug',sets:2,reps:'12/side'},
+            {name:'Side Plank',sets:2,reps:'35 sec/side'},
+          ]},
+        ], notes:['Sub or skip leg extension/curl if equipment unavailable'], stretch:null },
+      }
+    },
+    // Day 4 — Recovery
+    {
+      id: 4, label: 'RECOVERY', sub: 'Mobility · Rest',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'RECOVERY OPTIONS (CHOOSE 1–3)', exercises:[
+            {name:'Gentle Plantar Fascia Stretch',sets:2,reps:'20–30 sec'},
+            {name:'Seated Calf Stretch',sets:2,reps:'20–30 sec'},
+            {name:'Ankle Mobility',sets:1,reps:'10–15 reps'},
+            {name:'Light Upper Body Mobility',sets:1,reps:'optional'},
+          ]},
+        ], notes:['No formal strength training · monitor heel discomfort tomorrow morning'], stretch:null },
+        W2: { supersets: [
+          { name:'RECOVERY OPTIONS (CHOOSE 1–3)', exercises:[
+            {name:'Gentle Foot and Calf Mobility',sets:1,reps:'5–10 min'},
+            {name:'Light Walk',sets:1,reps:'optional'},
+          ]},
+        ], notes:['No formal strength training · monitor next-morning heel discomfort'], stretch:null },
+        W3: { supersets: [
+          { name:'RECOVERY', exercises:[
+            {name:'Rest or light mobility',sets:1,reps:'your choice'},
+          ]},
+        ], stretch:null },
+        W4: { supersets: [
+          { name:'RECOVERY', exercises:[
+            {name:'Rest or light mobility',sets:1,reps:'your choice'},
+          ]},
+        ], stretch:null },
+        W5: { supersets: [
+          { name:'RECOVERY', exercises:[
+            {name:'Rest or light mobility',sets:1,reps:'your choice'},
+          ]},
+        ], stretch:null },
+        W6: { supersets: [
+          { name:'RECOVERY', exercises:[
+            {name:'Rest or light mobility',sets:1,reps:'your choice'},
+          ]},
+        ], stretch:null },
+      }
+    },
+    // Day 5 — Push B / Pull B / Lower+Core
+    {
+      id: 5, label: 'PUSH B / PULL B / LOWER', sub: 'Upper Body · Core',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'PUSH B', exercises:[
+            {name:'Incline DB Bench Press',sets:2,reps:'10'},
+            {name:'Neutral-Grip DB Floor Press',sets:2,reps:'10'},
+            {name:'Seated Arnold Press',sets:2,reps:'10'},
+            {name:'DB Lateral Raise',sets:2,reps:'12'},
+            {name:'Lying DB Triceps Extension',sets:2,reps:'12'},
+            {name:'Side Plank',sets:2,reps:'20 sec/side'},
+          ]},
+        ], stretch:null },
+        W2: { supersets: [
+          { name:'PULL B', exercises:[
+            {name:'Chest-Supported DB Row',sets:2,reps:'10'},
+            {name:'Assisted Chin-Up or Supported Row',sets:2,reps:'6–10'},
+            {name:'DB Hip Thrust or Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Rear-Delt DB Fly',sets:2,reps:'12'},
+            {name:'Supinating DB Curl',sets:2,reps:'12'},
+            {name:'Reverse Crunch',sets:2,reps:'10'},
+          ]},
+        ], stretch:null },
+        W3: { supersets: [
+          { name:'PUSH B', exercises:[
+            {name:'Incline DB Bench Press',sets:3,reps:'8–12'},
+            {name:'Neutral-Grip DB Floor Press',sets:2,reps:'10'},
+            {name:'Seated Arnold Press',sets:2,reps:'10'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Lying DB Triceps Extension',sets:2,reps:'12'},
+            {name:'Side Plank',sets:2,reps:'25 sec/side'},
+          ]},
+        ], stretch:null },
+        W4: { supersets: [
+          { name:'PUSH B', exercises:[
+            {name:'Incline DB Bench Press',sets:3,reps:'8–12'},
+            {name:'Neutral-Grip DB Floor Press',sets:2,reps:'10–12'},
+            {name:'Seated Arnold Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Lying DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Side Plank',sets:2,reps:'30 sec/side'},
+          ]},
+        ], stretch:null },
+        W5: { supersets: [
+          { name:'PUSH B + PELOTON', exercises:[
+            {name:'Incline DB Bench Press',sets:3,reps:'8–12'},
+            {name:'Neutral-Grip DB Floor Press',sets:2,reps:'10–12'},
+            {name:'Seated Arnold Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Lying DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Side Plank',sets:2,reps:'30 sec/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Ride',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], stretch:null },
+        W6: { supersets: [
+          { name:'PUSH B + PELOTON', exercises:[
+            {name:'Incline DB Bench Press',sets:3,reps:'8–12'},
+            {name:'Neutral-Grip DB Floor Press',sets:2,reps:'10–12'},
+            {name:'Seated Arnold Press',sets:2,reps:'10–12'},
+            {name:'DB Lateral Raise',sets:2,reps:'12–15'},
+            {name:'Lying DB Triceps Extension',sets:2,reps:'12–15'},
+            {name:'Side Plank',sets:2,reps:'35 sec/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Ride',sets:1,reps:'__PELOTON_EASY__'}]},
+        ], stretch:null },
+      }
+    },
+    // Day 6 — Peloton Endurance / Pull B
+    {
+      id: 6, label: 'PELOTON / PULL B', sub: 'Cycling · Back · Biceps',
+      warmup: [],
+      phases: {
+        W1: { supersets: [
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride — seated only',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Easy steady pedaling · remain seated throughout'], stretch:null },
+        W2: { supersets: [
+          { name:'PELOTON', exercises:[{name:'Easy Aerobic Ride — seated only',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Easy aerobic riding only'], stretch:null },
+        W3: { supersets: [
+          { name:'PULL B', exercises:[
+            {name:'Chest-Supported DB Row',sets:3,reps:'8–12'},
+            {name:'Assisted Chin-Up or Supported Row',sets:2,reps:'6–10'},
+            {name:'DB Hip Thrust or Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Rear-Delt DB Fly',sets:2,reps:'12–15'},
+            {name:'Supinating DB Curl',sets:2,reps:'12'},
+            {name:'Reverse Crunch',sets:2,reps:'12'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], stretch:null },
+        W4: { supersets: [
+          { name:'PULL B', exercises:[
+            {name:'Chest-Supported DB Row',sets:3,reps:'8–12'},
+            {name:'Assisted Chin-Up or Supported Row',sets:3,reps:'6–10'},
+            {name:'DB Hip Thrust or Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Rear-Delt DB Fly',sets:2,reps:'12–15'},
+            {name:'Supinating DB Curl',sets:2,reps:'10–12'},
+            {name:'Reverse Crunch',sets:2,reps:'12–15'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Endurance Ride (optional tempo)',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Optional tempo: 3 × 2 min at RPE 5–6 with 3 min easy between · only if feeling good'], stretch:null },
+        W5: { supersets: [
+          { name:'PULL B', exercises:[
+            {name:'Chest-Supported DB Row',sets:3,reps:'8–12'},
+            {name:'Assisted Chin-Up or Supported Row',sets:3,reps:'6–10'},
+            {name:'DB Hip Thrust or Floor Glute Bridge',sets:2,reps:'12'},
+            {name:'Rear-Delt DB Fly',sets:2,reps:'12–15'},
+            {name:'Supinating DB Curl',sets:2,reps:'10–12'},
+            {name:'Reverse Crunch',sets:2,reps:'15'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], stretch:null },
+        W6: { supersets: [
+          { name:'OPTIONAL ACCESSORIES + PELOTON', exercises:[
+            {name:'Seated DB Lateral Raise (optional)',sets:2,reps:'15'},
+            {name:'Chest-Supported Reverse Fly (optional)',sets:2,reps:'15'},
+            {name:'Hammer Curl (optional)',sets:2,reps:'12'},
+            {name:'Seated DB Triceps Extension (optional)',sets:2,reps:'12'},
+            {name:'Dead Bug (optional)',sets:2,reps:'10/side'},
+          ]},
+          { name:'PELOTON', exercises:[{name:'Easy Endurance Ride',sets:1,reps:'__PELOTON_ENDURANCE__'}]},
+        ], notes:['Accessories are optional — if recovery is poor, do only the ride or shorten it'], stretch:null },
+      }
+    },
+    // Day 7 — Full Rest
+    {
+      id: 7, label: 'REST', sub: 'Full Rest Day',
+      warmup: [],
+      phases: {
+        W1: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+        W2: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+        W3: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+        W4: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+        W5: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+        W6: { supersets: [{ name:'FULL REST', exercises:[{name:'Rest',sets:1,reps:'No training today'}]}], stretch:null },
+      }
+    },
+  ]
+};
 // ═══════════════════════════════════════════════════════
 // ACTIVE PROGRAM HELPERS
 // ═══════════════════════════════════════════════════════
-function getProgram()    { return activeProgram === 'v3' ? PROGRAM_V3 : PROGRAM_V2; }
-function getDayColors() { return activeProgram === 'v3' ? DAY_COLORS_V3 : DAY_COLORS_V2; }
+function getProgram()    { return activeProgram === 'v3' ? PROGRAM_V3 : activeProgram === 'v2' ? PROGRAM_ARTEMIS : PROGRAM_V2; }
+function getDayColors() { return activeProgram === 'v3' ? DAY_COLORS_V3 : activeProgram === 'v2' ? DAY_COLORS_ARTEMIS : DAY_COLORS_V2; }
 function getCardio()     { return activeProgram === 'v3' ? CARDIO_V3 : CARDIO_V2; }
-function FIRESTORE_DOC() { return activeProgram === 'v3' ? 'tracker_v3' : 'tracker'; }
+function FIRESTORE_DOC() { return activeProgram === 'v3' ? 'tracker_v3' : activeProgram === 'v2' ? 'tracker_v2' : 'tracker'; }
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -1016,6 +1449,7 @@ function noteKey(w,d,exName)  { return `note_${exName.replace(/\s+/g,'_')}_w${w}
 function manualKey(w,d)       { return `mc_w${w}_d${d}`; }
 
 function getDayPhase(week) {
+  if (activeProgram === 'v2') return 'W' + week; // ARTEMIS uses per-week phases
   if (activeProgram === 'v3') {
     if (week <= 2) return 'A';
     if (week <= 4) return 'B';
@@ -1029,10 +1463,26 @@ function getDayData(dayIdx, week) {
   const day = prog.days[dayIdx];
   const phase = getDayPhase(week);
   const wi = week - 1;
-  const phaseData = day.phases[phase] || day.phases['A'];
+  const fallbackKey = activeProgram === 'v2' ? 'W1' : 'A';
+  const phaseData = day.phases[phase] || day.phases[fallbackKey];
   const colors = getDayColors();
 
-  if (activeProgram === 'v3') {
+  if (activeProgram === 'v2') {
+    // ARTEMIS — resolve Peloton tokens
+    const peloton = PELOTON_ARTEMIS;
+    const pelotonMap = { '__PELOTON_EASY__': 'easy', '__PELOTON_ENDURANCE__': 'endurance' };
+    const supersets = phaseData.supersets.map(ss => ({
+      ...ss,
+      exercises: ss.exercises.map(ex => {
+        let reps = ex.reps;
+        for (const [token, key] of Object.entries(pelotonMap)) {
+          if (reps === token) { reps = peloton[key][wi] || reps; break; }
+        }
+        return { ...ex, reps };
+      })
+    }));
+    return { ...day, ...phaseData, supersets, color: colors[dayIdx] };
+  } else if (activeProgram === 'v3') {
     const cardio = getCardio();
     const supersets = phaseData.supersets.map(ss => ({
       ...ss,
@@ -1181,6 +1631,7 @@ function updateTimer() {
 // RENDER
 // ═══════════════════════════════════════════════════════
 function render() {
+  try {
   const app = document.getElementById('app');
   const content = document.getElementById('main-content');
   const contentScroll = content ? content.scrollTop : 0;
@@ -1206,6 +1657,9 @@ function render() {
 
   bindEvents();
   updateTimer();
+  } catch(e) {
+    document.getElementById('app').innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;padding:20px"><div style="color:#ff4444;font-family:monospace;font-size:11px;max-width:100%;word-break:break-all;white-space:pre-wrap">RENDER ERROR: ' + e.message + '\n\n' + (e.stack||'') + '</div></div>';
+  }
 }
 
 function renderMobileTimer() {
@@ -1227,7 +1681,9 @@ function renderMobileTimer() {
 
 function renderMobileNav() {
   const prog = getProgram();
-  const phaseLabel = activeProgram === 'v3'
+  const phaseLabel = activeProgram === 'v2'
+    ? (w => w <= 2 ? 'Restart' : w <= 4 ? 'Build' : 'Expand')
+    : activeProgram === 'v3'
     ? (w => w <= 2 ? 'Reset + Rebuild' : w <= 4 ? 'Build Phase' : 'Performance')
     : (w => w <= 3 ? 'Foundation' : 'Progression');
   const weekOptions = [1,2,3,4,5,6].map(w =>
@@ -1259,7 +1715,8 @@ function renderHeader() {
       ${renderTimer()}
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <select class="prog-select" onchange="setProgram(this.value)">
-          <option value="v2" ${activeProgram==='v2'?'selected':''}>PROGRAM: OG</option>
+          <option value="og" ${activeProgram==='og'?'selected':''}>PROGRAM: OG</option>
+          <option value="v2" ${activeProgram==='v2'?'selected':''}>PROGRAM: ARTEMIS</option>
           <option value="v3" ${activeProgram==='v3'?'selected':''}>PROGRAM: POSEIDON</option>
         </select>
         <div style="display:flex;gap:6px;align-items:center">
@@ -1297,12 +1754,12 @@ function renderSidebar() {
       const pct = getDayProgress(w,d);
       const color = colors[d];
       const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : activeProgram==='v3' ? '#dceef2' : '#ffffff';
+      const bg = pct===100 ? color : activeProgram==='v3' ? '#dceef2' : activeProgram==='v2' ? '#243320' : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
         : pct===100
           ? `1px solid ${color}`
-          : activeProgram==='v3' ? '1px solid #9dc4c0' : '1px solid #cccccc';
+          : activeProgram==='v3' ? '1px solid #9dc4c0' : activeProgram==='v2' ? '1px solid #3a4a2a' : '1px solid #cccccc';
       const textColor = pct===100 ? (activeProgram==='v3'?'#fff':'#000') : activeCell ? 'var(--accent)' : activeProgram==='v3'?'#2e4a52':'#222';
       const fontWeight = activeCell ? '900' : '700';
       cells += `<div class="heatmap-cell${pct===100?' done':''}"
@@ -1313,7 +1770,9 @@ function renderSidebar() {
     }
   }
 
-  const phaseLabel = activeProgram === 'v3'
+  const phaseLabel = activeProgram === 'v2'
+    ? (w => w <= 2 ? 'Restart' : w <= 4 ? 'Build' : 'Expand')
+    : activeProgram === 'v3'
     ? (w => w <= 2 ? 'Reset + Rebuild' : w <= 4 ? 'Build Phase' : 'Performance')
     : (w => w <= 3 ? 'Foundation' : 'Progression');
 
@@ -1368,7 +1827,9 @@ function renderWorkout() {
   const isManual = !!state.manualComplete[mk];
 
   let phaseLabel;
-  if (activeProgram === 'v3') {
+  if (activeProgram === 'v2') {
+    phaseLabel = w <= 2 ? 'RESTART (WKS 1–2)' : w <= 4 ? 'BUILD (WKS 3–4)' : 'EXPAND (WKS 5–6)';
+  } else if (activeProgram === 'v3') {
     phaseLabel = w <= 2 ? 'RESET + REBUILD (WKS 1–2)' : w <= 4 ? 'BUILD PHASE (WKS 3–4)' : 'PERFORMANCE PHASE (WKS 5–6)';
   } else {
     phaseLabel = w <= 3 ? 'FOUNDATION PHASE (WKS 1–3)' : 'PROGRESSION PHASE (WKS 4–6)';
@@ -1547,7 +2008,9 @@ function renderOverview() {
         </tr></thead>
         <tbody>
           ${[1,2,3,4,5,6].map(w => {
-            const phaseLabel = activeProgram === 'v3'
+            const phaseLabel = activeProgram === 'v2'
+              ? (w <= 2 ? 'Restart' : w <= 4 ? 'Build' : 'Expand')
+              : activeProgram === 'v3'
               ? (w <= 2 ? 'Reset' : w <= 4 ? 'Build' : 'Perform')
               : (w <= 3 ? 'Foundation' : 'Progression');
             const days = getProgram().days.map((_,di) => {
@@ -1714,11 +2177,15 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     document.getElementById('app').innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)"><div style="font-size:12px;color:var(--text3);letter-spacing:.2em">LOADING...</div></div>`;
-    await loadFromFirebase();
-    if (activeProgram === 'v3') await loadV2PRs();
-    const next = findLatestCompletedDay();
-    if (next) { state.activeWeek = next.week; state.activeDay = next.day; }
-    render();
+    try {
+      await loadFromFirebase();
+      if (activeProgram === 'v3') await loadV2PRs();
+      const next = findLatestCompletedDay();
+      if (next) { state.activeWeek = next.week; state.activeDay = next.day; }
+      render();
+    } catch(e) {
+      document.getElementById('app').innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;padding:20px"><div style="color:#ff4444;font-family:monospace;font-size:11px;max-width:100%;word-break:break-all;white-space:pre-wrap">ERROR: ' + e.message + '\n\n' + (e.stack||'') + '</div></div>';
+    }
   } else {
     currentUser = null;
     renderLoginScreen();
@@ -1751,3 +2218,4 @@ window.setProgram = setProgram;
 </script>
 </body>
 </html>
+
