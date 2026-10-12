@@ -970,7 +970,7 @@ const PROGRAM_V3 = {
 // ═══════════════════════════════════════════════════════
 // PROGRAM DATA — ARTEMIS (V2)
 // ═══════════════════════════════════════════════════════
-const DAY_COLORS_ARTEMIS = ['#c8860a','#6a9a2a','#8B4513','#c8860a','#6a9a2a','#8B4513','#4a5a38'];
+const DAY_COLORS_ARTEMIS = ['#5ab825','#c8860a','#5ab825','#c8860a','#5ab825','#c8860a','#8a7a52'];
 
 // Peloton durations by week [W1..W6]
 const PELOTON_ARTEMIS = {
@@ -1369,6 +1369,7 @@ let state = {
   sessionEdits: {},
   openNote: null,
   openEdit: null,
+  adminData: {},
   timerSec: 90,
   timerRunning: false,
   timerInterval: null,
@@ -1754,12 +1755,12 @@ function renderSidebar() {
       const pct = getDayProgress(w,d);
       const color = colors[d];
       const activeCell = w===state.activeWeek && d===state.activeDay;
-      const bg = pct===100 ? color : activeProgram==='v3' ? '#dceef2' : activeProgram==='v2' ? '#243320' : '#ffffff';
+      const bg = pct===100 ? color : activeProgram==='v3' ? '#dceef2' : activeProgram==='v2' ? '#332b1e' : '#ffffff';
       const border = activeCell
         ? `2px solid var(--accent)`
         : pct===100
           ? `1px solid ${color}`
-          : activeProgram==='v3' ? '1px solid #9dc4c0' : activeProgram==='v2' ? '1px solid #3a4a2a' : '1px solid #cccccc';
+          : activeProgram==='v3' ? '1px solid #9dc4c0' : activeProgram==='v2' ? '1px solid #4a3e28' : '1px solid #cccccc';
       const textColor = pct===100 ? (activeProgram==='v3'?'#fff':'#000') : activeCell ? 'var(--accent)' : activeProgram==='v3'?'#2e4a52':'#222';
       const fontWeight = activeCell ? '900' : '700';
       cells += `<div class="heatmap-cell${pct===100?' done':''}"
@@ -1814,8 +1815,9 @@ function renderContent() {
   return `<div class="tab-row">
     <div class="tab${state.activeTab==='workout'?' active':''}" onclick="setTab('workout')">WORKOUT</div>
     <div class="tab${state.activeTab==='overview'?' active':''}" onclick="setTab('overview')">PROGRESS</div>
+    <div class="tab${state.activeTab==='admin'?' active':''}" onclick="setTab('admin')" style="margin-left:auto;color:var(--text3)">⚙ ADMIN</div>
   </div>
-  ${state.activeTab==='workout' ? renderWorkout() : renderOverview()}`;
+  ${state.activeTab==='workout' ? renderWorkout() : state.activeTab==='admin' ? renderAdmin() : renderOverview()}`;
 }
 
 function renderWorkout() {
@@ -2192,6 +2194,104 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+
+function renderAdmin() {
+  const programs = [
+    { key:'og', name:'OG', color:'#FF4500', firestore:'tracker', sub:'6-Week Training Program' },
+    { key:'v2', name:'ARTEMIS', color:'#5ab825', firestore:'tracker_v2', sub:'6-Week Strength & Cycling' },
+    { key:'v3', name:'POSEIDON', color:'#0077aa', firestore:'tracker_v3', sub:'Hybrid Push/Pull Performance' },
+  ];
+
+  const defaultProg = localStorage.getItem('lym_default_program') || 'v2';
+  const archivedProgs = JSON.parse(localStorage.getItem('lym_archived') || '{}');
+  const completedProgs = JSON.parse(localStorage.getItem('lym_completed') || '{}');
+
+  let html = `<div style="max-width:600px">
+    <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:4px;letter-spacing:.05em">ADMIN</div>
+    <div style="font-family:'Barlow',sans-serif;font-size:12px;color:var(--text3);margin-bottom:24px">Manage programs, status and data.</div>`;
+
+  programs.forEach(p => {
+    const isActive = activeProgram === p.key;
+    const isArchived = !!archivedProgs[p.key];
+    const isCompleted = !!completedProgs[p.key];
+    const isDefault = defaultProg === p.key;
+    const completedDate = completedProgs[p.key] ? new Date(completedProgs[p.key]).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : null;
+
+    html += `<div style="background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:10px;height:10px;background:${p.color};flex-shrink:0"></div>
+        <div>
+          <div style="font-size:16px;font-weight:900;color:#fff">${p.name}</div>
+          <div style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--text3)">${p.sub}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${isDefault ? `<span style="font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 8px;background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">DEFAULT</span>` : ''}
+          ${isArchived ? `<span style="font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 8px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2)">ARCHIVED</span>` : ''}
+          ${isCompleted ? `<span style="font-size:9px;font-weight:800;letter-spacing:.1em;padding:2px 8px;background:#00c89a22;color:#00c89a;border:1px solid #00c89a44">COMPLETE</span>` : ''}
+        </div>
+      </div>
+      ${isCompleted ? `<div style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--text3);margin-bottom:10px">Completed ${completedDate}</div>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${!isDefault ? `<button class="hdr-btn" onclick="adminSetDefault('${p.key}')">SET AS DEFAULT</button>` : ''}
+        ${!isCompleted ? `<button class="hdr-btn" onclick="adminMarkComplete('${p.key}')">MARK COMPLETE</button>` : `<button class="hdr-btn" onclick="adminUnmarkComplete('${p.key}')">REOPEN</button>`}
+        ${!isArchived ? `<button class="hdr-btn" onclick="adminArchive('${p.key}')">ARCHIVE</button>` : `<button class="hdr-btn" onclick="adminUnarchive('${p.key}')">UNARCHIVE</button>`}
+        <button class="hdr-btn" onclick="adminExport('${p.key}','${p.firestore}')">↓ EXPORT DATA</button>
+        ${!isActive ? `<button class="hdr-btn primary" onclick="setProgram('${p.key}')">SWITCH TO ${p.name}</button>` : `<span style="font-size:10px;color:var(--text3);padding:6px;letter-spacing:.1em">ACTIVE</span>`}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function adminSetDefault(prog) {
+  localStorage.setItem('lym_default_program', prog);
+  render();
+}
+
+function adminMarkComplete(prog) {
+  const completed = JSON.parse(localStorage.getItem('lym_completed') || '{}');
+  completed[prog] = Date.now();
+  localStorage.setItem('lym_completed', JSON.stringify(completed));
+  render();
+}
+
+function adminUnmarkComplete(prog) {
+  const completed = JSON.parse(localStorage.getItem('lym_completed') || '{}');
+  delete completed[prog];
+  localStorage.setItem('lym_completed', JSON.stringify(completed));
+  render();
+}
+
+function adminArchive(prog) {
+  const archived = JSON.parse(localStorage.getItem('lym_archived') || '{}');
+  archived[prog] = true;
+  localStorage.setItem('lym_archived', JSON.stringify(archived));
+  render();
+}
+
+function adminUnarchive(prog) {
+  const archived = JSON.parse(localStorage.getItem('lym_archived') || '{}');
+  delete archived[prog];
+  localStorage.setItem('lym_archived', JSON.stringify(archived));
+  render();
+}
+
+async function adminExport(prog, firestoreDoc) {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, firestoreDoc, currentUser.uid));
+    const data = snap.exists() ? snap.data() : {};
+    data.program = prog;
+    data.exportedAt = new Date().toISOString();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'lyv-' + prog + '-backup.json';
+    a.click();
+  } catch(e) { alert('Export failed: ' + e.message); }
+}
 // ── Expose to window ──
 window.setActiveDay = setActiveDay;
 window.setActiveWeek = setActiveWeek;
@@ -2215,7 +2315,14 @@ window.toggleEdit = toggleEdit;
 window.saveEdit = saveEdit;
 window.clearEdit = clearEdit;
 window.setProgram = setProgram;
+window.adminSetDefault = adminSetDefault;
+window.adminMarkComplete = adminMarkComplete;
+window.adminUnmarkComplete = adminUnmarkComplete;
+window.adminArchive = adminArchive;
+window.adminUnarchive = adminUnarchive;
+window.adminExport = adminExport;
 </script>
 </body>
 </html>
+
 
